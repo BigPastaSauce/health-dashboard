@@ -30,46 +30,34 @@ export default function RecoveryRing({ data }) {
 
   return (
     <WidgetCard className="items-center justify-center">
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="relative w-52 h-52 mb-4">
-          <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
-            {/* Background ring */}
-            <circle
-              cx="100" cy="100" r="90"
-              fill="none"
-              stroke="#2a2a4a"
-              strokeWidth="10"
-            />
-            {/* Progress ring */}
-            <circle
-              cx="100" cy="100" r="90"
-              fill="none"
-              stroke={color}
-              strokeWidth="10"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              style={{
-                filter: `drop-shadow(0 0 8px ${glow})`,
-                transition: 'stroke-dashoffset 1s ease-out'
-              }}
-            />
-          </svg>
-          {/* Center text */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-5xl font-bold" style={{ color }}>{score}</span>
-            <span className="text-sm text-whoop-textDim mt-1">Recovery</span>
+      <div className="flex flex-col items-center justify-center h-full flex-1">
+        {/* Ring — fills available space */}
+        <div className="relative flex-1 w-full flex items-center justify-center min-h-0">
+          <div className="relative" style={{ width: '75%', maxWidth: 280, aspectRatio: '1' }}>
+            <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#2a2a4a" strokeWidth="10" />
+              <circle
+                cx="100" cy="100" r="90" fill="none"
+                stroke={color} strokeWidth="10" strokeLinecap="round"
+                strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
+                style={{ filter: `drop-shadow(0 0 8px ${glow})`, transition: 'stroke-dashoffset 1s ease-out' }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-6xl font-black" style={{ color }}>{score}</span>
+              <span className="text-base text-whoop-textDim mt-1 font-medium">Recovery</span>
+            </div>
           </div>
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-4 gap-3 w-full mt-2">
+        <div className="grid grid-cols-4 gap-4 w-full mt-0 flex-shrink-0">
           {stats.map((stat) => (
             <div key={stat.label} className="text-center">
-              <div className="text-xs text-whoop-textDim mb-1">{stat.label}</div>
-              <div className="text-lg font-semibold text-whoop-text">
+              <div className="text-sm text-whoop-textDim mb-1">{stat.label}</div>
+              <div className="text-2xl font-bold text-whoop-text">
                 {stat.value}
-                <span className="text-xs text-whoop-textDim ml-0.5">{stat.unit}</span>
+                <span className="text-sm text-whoop-textDim ml-0.5">{stat.unit}</span>
               </div>
             </div>
           ))}

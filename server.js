@@ -13,18 +13,41 @@ app.use(cors());
 const HEALTH_DATA_DIR = 'C:/Users/clawdbot/Health Data';
 const SLEEP_DEBT_PATH = 'C:/Users/clawdbot/Projects/whoop-integration/data/sleep-debt.json';
 const SLEEP_DEBT_ALLTIME_PATH = 'C:/Users/clawdbot/Projects/whoop-integration/data/sleep-debt-alltime.json';
+const UNIFIED_RECORDS_PATH = join(__dirname, 'data', 'unified-records.json');
 
 function readJSON(filePath) {
   if (!existsSync(filePath)) return null;
-  return JSON.parse(readFileSync(filePath, 'utf-8'));
+  let raw = readFileSync(filePath, 'utf-8');
+  // Strip BOM if present
+  if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+  return JSON.parse(raw);
 }
 
-// GET /api/health — returns master-log.json contents as array
+// GET /api/health — returns unified historical records merged with daily logs
 app.get('/api/health', (req, res) => {
-  const data = readJSON(join(HEALTH_DATA_DIR, 'master-log.json'));
-  if (!data) return res.status(404).json({ error: 'No health data found' });
-  // Wrap single object in array if needed
-  const records = Array.isArray(data) ? data : [data];
+  // Load full historical export
+  let records = [];
+  const unified = readJSON(UNIFIED_RECORDS_PATH);
+  if (unified && Array.isArray(unified)) {
+    records = unified;
+  }
+  
+  // Also load master-log for any newer data not yet in unified
+  const masterLog = readJSON(join(HEALTH_DATA_DIR, 'master-log.json'));
+  if (masterLog) {
+    const masterRecords = Array.isArray(masterLog) ? masterLog : [masterLog];
+    const existingDates = new Set(records.map(r => r.date));
+    for (const r of masterRecords) {
+      if (r.date && !existingDates.has(r.date)) {
+        records.push(r);
+      }
+    }
+  }
+  
+  // Sort by date ascending
+  records.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  
+  if (records.length === 0) return res.status(404).json({ error: 'No health data found' });
   res.json(records);
 });
 
@@ -60,6 +83,12 @@ if (existsSync(distPath)) {
   });
 }
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Health Dashboard server running on http://localhost:${PORT}`);
 });
+server.on('error', (err) => {
+  console.error('Server error:', err.message);
+});
+// Keep alive
+process.on('uncaughtException', (err) => console.error('Uncaught:', err));
+process.on('unhandledRejection', (err) => console.error('Unhandled:', err));
