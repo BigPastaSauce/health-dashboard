@@ -14,6 +14,7 @@ function CaloriesChart({ chartData, height = 'h-56' }) {
           <Tooltip
             contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#E0E0E0' }}
             labelStyle={{ color: '#9ca3af' }}
+            itemStyle={{ color: '#9ca3af' }}
             formatter={(value) => [`${value.toLocaleString()} cal`, 'Calories']}
           />
           <Bar dataKey="calories" fill="#FF9100" radius={[4, 4, 0, 0]} />

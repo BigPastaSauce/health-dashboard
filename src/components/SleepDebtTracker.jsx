@@ -19,9 +19,13 @@ function DebtChart({ chartData, height = 'h-[280px]' }) {
           <XAxis dataKey="date" tick={{ fill: '#8888AA', fontSize: 11 }} />
           <YAxis tick={{ fill: '#8888AA', fontSize: 11 }} />
           <Tooltip
-            contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#E0E0E0' }}
+            contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#9ca3af' }}
             labelStyle={{ color: '#9ca3af' }}
-            formatter={(value) => [`${value > 0 ? '+' : ''}${value.toFixed(1)}h`, 'Sleep Debt']}
+            formatter={(value) => {
+              const color = value >= 0 ? '#69F0AE' : '#FF8A80';
+              return [<span style={{ color }}>{value > 0 ? '+' : ''}{value.toFixed(1)}h</span>, <span style={{ color: '#9ca3af' }}>Sleep Debt</span>];
+            }}
+            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
           />
           <ReferenceLine y={0} stroke="#8888AA" strokeDasharray="3 3" />
           <Bar dataKey="debt" radius={[4, 4, 0, 0]}>

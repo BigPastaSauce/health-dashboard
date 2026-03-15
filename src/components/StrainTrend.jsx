@@ -33,6 +33,7 @@ export default function StrainTrend({ records }) {
           <Tooltip
             contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#E0E0E0' }}
             labelStyle={{ color: '#9ca3af' }}
+            itemStyle={{ color: '#9ca3af' }}
             formatter={(value) => [`${value.toFixed(1)}`, 'Strain']}
           />
           <Bar dataKey="strain" radius={[4, 4, 0, 0]}>

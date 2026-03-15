@@ -14,6 +14,7 @@ function SleepChart({ chartData, height = 'flex-1 min-h-0' }) {
             <Tooltip
               contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#E0E0E0' }}
             labelStyle={{ color: '#9ca3af' }}
+            itemStyle={{ color: '#9ca3af' }}
               formatter={(value, name) => {
                 const labels = { deep: 'Deep', rem: 'REM', light: 'Light', awake: 'Awake' };
                 return [`${value.toFixed(1)}h`, labels[name] || name];

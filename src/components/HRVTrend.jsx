@@ -23,7 +23,8 @@ export default function HRVTrend({ records }) {
           <XAxis dataKey="date" tick={{ fill: '#8888AA', fontSize: 11 }} />
           <YAxis tick={{ fill: '#8888AA', fontSize: 11 }} domain={['auto', 'auto']} />
           <Tooltip contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#E0E0E0' }}
-            labelStyle={{ color: '#9ca3af' }} />
+            labelStyle={{ color: '#9ca3af' }}
+            itemStyle={{ color: '#9ca3af' }} />
           <Line type="monotone" dataKey="hrv" stroke="#B388FF" strokeWidth={2} dot={{ fill: '#B388FF', r: 2 }} activeDot={{ r: 5 }} />
         </LineChart>
       </ResponsiveContainer>

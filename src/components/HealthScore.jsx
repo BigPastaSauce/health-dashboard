@@ -150,15 +150,15 @@ export default function HealthScore({ records, sleepDebtAlltime }) {
       {/* Top section: ring + physio age side by side */}
       <div className="flex items-center gap-10 mb-3">
         {/* Score ring */}
-        <div className="relative flex-shrink-0" style={{ width: 140, height: 140 }}>
-          <svg width={140} height={140} className="transform -rotate-90">
-            <circle cx={70} cy={70} r={60} fill="none" stroke="#2a2a4a" strokeWidth="8" />
+        <div className="relative flex-shrink-0" style={{ width: 170, height: 170 }}>
+          <svg width={170} height={170} className="transform -rotate-90">
+            <circle cx={85} cy={85} r={72} fill="none" stroke="#2a2a4a" strokeWidth="8" />
             <motion.circle
-              cx={70} cy={70} r={60} fill="none"
+              cx={85} cy={85} r={72} fill="none"
               stroke={scoreColor} strokeWidth="8" strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 60}
-              initial={{ strokeDashoffset: 2 * Math.PI * 60 }}
-              animate={{ strokeDashoffset: 2 * Math.PI * 60 * (1 - overall / 100) }}
+              strokeDasharray={2 * Math.PI * 72}
+              initial={{ strokeDashoffset: 2 * Math.PI * 72 }}
+              animate={{ strokeDashoffset: 2 * Math.PI * 72 * (1 - overall / 100) }}
               transition={{ duration: 1.5, ease: 'easeOut' }}
             />
           </svg>

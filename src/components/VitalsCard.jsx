@@ -24,7 +24,8 @@ function RHRChart({ chartData, height = 'flex-1 min-h-0' }) {
           <XAxis dataKey="date" tick={{ fill: '#8888AA', fontSize: 10 }} />
           <YAxis tick={{ fill: '#8888AA', fontSize: 10 }} domain={['auto', 'auto']} />
           <Tooltip contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#E0E0E0' }}
-            labelStyle={{ color: '#9ca3af' }} />
+            labelStyle={{ color: '#9ca3af' }}
+            itemStyle={{ color: '#9ca3af' }} />
           <Line type="monotone" dataKey="rhr" stroke="#FF5252" strokeWidth={2} dot={{ fill: '#FF5252', r: 3 }} name="RHR" />
           <Line type="monotone" dataKey="respRate" stroke="#69F0AE" strokeWidth={2} dot={{ fill: '#69F0AE', r: 3 }} name="Resp Rate" />
         </LineChart>

@@ -249,19 +249,19 @@ function App() {
     });
   }, []);
 
-  const [dropTarget, setDropTarget] = useState({ idx: null, side: null });
+  const [dropTarget, setDropTarget] = useState({ key: null, side: null });
 
   const scrollRaf = useRef(null);
 
-  const handleDragStart = (e, idx) => {
-    dragItem.current = idx;
+  const handleDragStart = (e, key) => {
+    dragItem.current = key;
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', key);
     const el = e.currentTarget;
     setTimeout(() => el.style.opacity = '0.4', 0);
 
-    // Auto-scroll while dragging near edges
-    const EDGE = 80; // px from edge to start scrolling
-    const SPEED = 12; // px per frame
+    const EDGE = 80;
+    const SPEED = 12;
     const tick = () => {
       const y = lastDragY.current;
       if (y < EDGE) window.scrollBy(0, -SPEED);
@@ -273,45 +273,43 @@ function App() {
 
   const lastDragY = useRef(0);
 
-  const handleDragOver = (e, idx) => {
+  const handleDragOver = (e, key) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     lastDragY.current = e.clientY;
-    if (dragItem.current === null || dragItem.current === idx) {
-      setDropTarget({ idx: null, side: null });
+    if (!dragItem.current || dragItem.current === key) {
+      setDropTarget({ key: null, side: null });
       return;
     }
-    // Determine left/right half of the widget
     const rect = e.currentTarget.getBoundingClientRect();
     const midX = rect.left + rect.width / 2;
     const side = e.clientX < midX ? 'left' : 'right';
-    setDropTarget({ idx, side });
+    setDropTarget({ key, side });
   };
 
   const handleDragLeave = (e) => {
-    // Only clear if actually leaving the element (not entering a child)
     if (!e.currentTarget.contains(e.relatedTarget)) {
-      setDropTarget({ idx: null, side: null });
+      setDropTarget({ key: null, side: null });
     }
   };
 
-  const handleDrop = (e, idx) => {
+  const handleDrop = (e, targetKey) => {
     e.preventDefault();
-    const fromIdx = dragItem.current;
-    if (fromIdx === null || fromIdx === idx) return;
+    const draggedKey = dragItem.current;
+    if (!draggedKey || draggedKey === targetKey) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const midX = rect.left + rect.width / 2;
     const side = e.clientX < midX ? 'left' : 'right';
 
-    const targetKey = widgetOrder[idx];
     const newOrder = [...widgetOrder];
-    const [draggedItem] = newOrder.splice(fromIdx, 1);
-    // Find where the target ended up after removal
-    const targetIdx = newOrder.indexOf(targetKey);
-    if (targetIdx === -1) return;
-    const insertIdx = side === 'left' ? targetIdx : targetIdx + 1;
-    newOrder.splice(insertIdx, 0, draggedItem);
+    const fromIdx = newOrder.indexOf(draggedKey);
+    if (fromIdx === -1) return;
+    newOrder.splice(fromIdx, 1);
+    const toIdx = newOrder.indexOf(targetKey);
+    if (toIdx === -1) return;
+    const insertIdx = side === 'left' ? toIdx : toIdx + 1;
+    newOrder.splice(insertIdx, 0, draggedKey);
 
     setWidgetOrder(newOrder);
     localStorage.setItem(LAYOUT_KEY, JSON.stringify(newOrder));
@@ -322,7 +320,7 @@ function App() {
     e.currentTarget.style.opacity = '1';
     dragItem.current = null;
     dragOverItem.current = null;
-    setDropTarget({ idx: null, side: null });
+    setDropTarget({ key: null, side: null });
     if (scrollRaf.current) {
       cancelAnimationFrame(scrollRaf.current);
       scrollRaf.current = null;
@@ -407,18 +405,18 @@ function App() {
                 } ${editMode ? 'ring-2 ring-dashed ring-gray-600 hover:ring-[#00E676]/50 rounded-2xl' : ''}`}
                 style={{ minHeight: 0, gridRow: `span ${size === 8 ? 6 : 3}`, transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}
                 draggable={editMode}
-                onDragStart={(e) => handleDragStart(e, idx)}
-                onDragOver={(e) => handleDragOver(e, idx)}
+                onDragStart={(e) => handleDragStart(e, key)}
+                onDragOver={(e) => handleDragOver(e, key)}
                 onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, idx)}
+                onDrop={(e) => handleDrop(e, key)}
                 onDragEnd={handleDragEnd}
               >
                 {/* Drop indicator - left */}
-                {editMode && dropTarget.idx === idx && dropTarget.side === 'left' && (
+                {editMode && dropTarget.key === key && dropTarget.side === 'left' && (
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#00E676] rounded-full z-20 shadow-[0_0_8px_#00E676]" />
                 )}
                 {/* Drop indicator - right */}
-                {editMode && dropTarget.idx === idx && dropTarget.side === 'right' && (
+                {editMode && dropTarget.key === key && dropTarget.side === 'right' && (
                   <div className="absolute right-0 top-0 bottom-0 w-1 bg-[#00E676] rounded-full z-20 shadow-[0_0_8px_#00E676]" />
                 )}
                 {renderWidget(key)}
