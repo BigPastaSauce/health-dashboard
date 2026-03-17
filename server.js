@@ -44,8 +44,14 @@ app.get('/api/health', (req, res) => {
     }
   }
   
-  // Sort by date ascending
+  // Sort by date ascending and deduplicate
   records.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const seen = new Set();
+  records = records.filter(r => {
+    if (!r.date || seen.has(r.date)) return false;
+    seen.add(r.date);
+    return true;
+  });
   
   if (records.length === 0) return res.status(404).json({ error: 'No health data found' });
   res.json(records);

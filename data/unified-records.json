@@ -2077,77 +2077,6 @@
     },
     {
         "sleep":  {
-                      "start":  "2026-01-22T23:40:55.960Z",
-                      "sleep_cycles":  4,
-                      "deep_sleep_hrs":  1.39,
-                      "respiratory_rate":  15.234375,
-                      "total_in_bed_hrs":  5.43,
-                      "light_sleep_hrs":  3.16,
-                      "sleep_efficiency":  97.67222,
-                      "rem_sleep_hrs":  0.69,
-                      "sleep_performance":  45.0,
-                      "end":  "2026-01-23T05:06:28.660Z",
-                      "total_awake_hrs":  0.18,
-                      "total_sleep_hrs":  5.24,
-                      "sleep_consistency":  20.0
-                  },
-        "date":  "2026-01-22",
-        "recovery":  {
-                         "hrv_rmssd_milli":  64.06639,
-                         "score":  52.0,
-                         "resting_heart_rate":  55.0,
-                         "spo2_percentage":  96.5,
-                         "skin_temp_celsius":  33.601665
-                     },
-        "workouts":  [
-                         {
-                             "strain":  6.0,
-                             "max_hr":  143,
-                             "calories":  178,
-                             "start":  "2026-01-22T20:57:00.960Z",
-                             "avg_hr":  119,
-                             "duration_min":  25.9,
-                             "sport":  "activity",
-                             "end":  "2026-01-22T21:22:56.950Z"
-                         },
-                         {
-                             "strain":  5.2,
-                             "max_hr":  147,
-                             "calories":  105,
-                             "start":  "2026-01-22T20:25:30.940Z",
-                             "avg_hr":  113,
-                             "duration_min":  19.5,
-                             "sport":  "activity",
-                             "end":  "2026-01-22T20:44:59.960Z"
-                         },
-                         {
-                             "strain":  14.0,
-                             "max_hr":  167,
-                             "calories":  1040,
-                             "start":  "2026-01-22T13:55:30.760Z",
-                             "avg_hr":  128,
-                             "duration_min":  120.6,
-                             "sport":  "activity",
-                             "end":  "2026-01-22T15:56:09.720Z"
-                         }
-                     ],
-        "strain":  {
-                       "calories":  1939,
-                       "strain":  5.0,
-                       "average_heart_rate":  70,
-                       "max_heart_rate":  126,
-                       "kilojoule":  8114.6973
-                   },
-        "logged_at":  "2026-01-24T03:21:41.884Z",
-        "body":  {
-                     "weight_kg":  111.99196,
-                     "weight_lbs":  246.9,
-                     "height_m":  1.7272,
-                     "max_heart_rate":  188
-                 }
-    },
-    {
-        "sleep":  {
                       "start":  "2026-01-22T06:39:53.890Z",
                       "sleep_cycles":  3,
                       "deep_sleep_hrs":  1.91,
@@ -2327,45 +2256,6 @@
                        "kilojoule":  15416.6875
                    },
         "logged_at":  "2026-01-27T09:57:56.909Z",
-        "body":  {
-                     "weight_kg":  111.99196,
-                     "weight_lbs":  246.9,
-                     "height_m":  1.7272,
-                     "max_heart_rate":  188
-                 }
-    },
-    {
-        "sleep":  {
-                      "start":  "2026-01-27T23:59:51.410Z",
-                      "sleep_cycles":  4,
-                      "deep_sleep_hrs":  1.17,
-                      "respiratory_rate":  17.285156,
-                      "total_in_bed_hrs":  5.76,
-                      "light_sleep_hrs":  2.87,
-                      "sleep_efficiency":  92.186165,
-                      "rem_sleep_hrs":  1.27,
-                      "sleep_performance":  72.0,
-                      "end":  "2026-01-28T05:45:23.870Z",
-                      "total_awake_hrs":  0.45,
-                      "total_sleep_hrs":  5.31,
-                      "sleep_consistency":  31.0
-                  },
-        "date":  "2026-01-27",
-        "recovery":  {
-                         "hrv_rmssd_milli":  45.57247,
-                         "score":  35.0,
-                         "resting_heart_rate":  58.0,
-                         "spo2_percentage":  97.0,
-                         "skin_temp_celsius":  33.170334
-                     },
-        "strain":  {
-                       "calories":  2988,
-                       "strain":  8.9,
-                       "average_heart_rate":  73,
-                       "max_heart_rate":  130,
-                       "kilojoule":  12500.942
-                   },
-        "logged_at":  "2026-01-29T09:59:44.811Z",
         "body":  {
                      "weight_kg":  111.99196,
                      "weight_lbs":  246.9,
@@ -4192,45 +4082,6 @@
     },
     {
         "sleep":  {
-                      "start":  "2026-03-11T18:12:52.710Z",
-                      "sleep_cycles":  2,
-                      "deep_sleep_hrs":  1.74,
-                      "respiratory_rate":  18.691406,
-                      "total_in_bed_hrs":  5.35,
-                      "light_sleep_hrs":  2.2,
-                      "sleep_efficiency":  89.80627,
-                      "rem_sleep_hrs":  0.83,
-                      "sleep_performance":  52.0,
-                      "end":  "2026-03-11T23:33:42.250Z",
-                      "total_awake_hrs":  0.57,
-                      "total_sleep_hrs":  4.78,
-                      "sleep_consistency":  18.0
-                  },
-        "date":  "2026-03-11",
-        "recovery":  {
-                         "hrv_rmssd_milli":  58.396133,
-                         "score":  42.0,
-                         "resting_heart_rate":  60.0,
-                         "spo2_percentage":  94.888885,
-                         "skin_temp_celsius":  32.826935
-                     },
-        "strain":  {
-                       "calories":  4500,
-                       "strain":  13.3,
-                       "average_heart_rate":  76,
-                       "max_heart_rate":  143,
-                       "kilojoule":  18827.719
-                   },
-        "logged_at":  "2026-03-13T20:48:08.747Z",
-        "body":  {
-                     "weight_kg":  111.99196,
-                     "weight_lbs":  246.9,
-                     "height_m":  1.7272,
-                     "max_heart_rate":  188
-                 }
-    },
-    {
-        "sleep":  {
                       "start":  "2026-03-11T01:57:48.440Z",
                       "sleep_cycles":  1,
                       "deep_sleep_hrs":  2.04,
@@ -4305,13 +4156,81 @@
                          }
                      ],
         "strain":  {
-                       "calories":  3538,
-                       "strain":  14.9,
-                       "average_heart_rate":  76,
+                       "calories":  2690,
+                       "strain":  14.0,
+                       "average_heart_rate":  72,
                        "max_heart_rate":  170,
-                       "kilojoule":  14803.992
+                       "kilojoule":  11256.989
                    },
-        "logged_at":  "2026-03-13T23:08:20.433Z",
+        "logged_at":  "2026-03-14T13:59:14.556Z",
+        "body":  {
+                     "weight_kg":  111.99196,
+                     "weight_lbs":  246.9,
+                     "height_m":  1.7272,
+                     "max_heart_rate":  188
+                 }
+    },
+    {
+        "strain":  {
+                       "calories":  2942,
+                       "strain":  13.5,
+                       "average_heart_rate":  87,
+                       "max_heart_rate":  172,
+                       "kilojoule":  12307.926
+                   },
+        "date":  "2026-03-14",
+        "workouts":  [
+                         {
+                             "strain":  7.4,
+                             "max_hr":  172,
+                             "calories":  204,
+                             "start":  "2026-03-14T13:25:30.750Z",
+                             "avg_hr":  136,
+                             "duration_min":  19.5,
+                             "sport":  "commuting",
+                             "end":  "2026-03-14T13:44:59.740Z"
+                         }
+                     ],
+        "logged_at":  "2026-03-15T08:20:30.457Z",
+        "body":  {
+                     "weight_kg":  111.99196,
+                     "weight_lbs":  246.9,
+                     "height_m":  1.7272,
+                     "max_heart_rate":  188
+                 }
+    },
+    {
+        "sleep":  {
+                      "start":  "2026-03-15T03:03:23.590Z",
+                      "sleep_cycles":  2,
+                      "deep_sleep_hrs":  1.63,
+                      "respiratory_rate":  17.050781,
+                      "total_in_bed_hrs":  4.91,
+                      "light_sleep_hrs":  1.9,
+                      "sleep_efficiency":  98.29755,
+                      "rem_sleep_hrs":  1.28,
+                      "sleep_performance":  60.0,
+                      "end":  "2026-03-15T07:58:16.230Z",
+                      "total_awake_hrs":  0.1,
+                      "total_sleep_hrs":  4.81,
+                      "sleep_consistency":  14.0
+                  },
+        "date":  "2026-03-15",
+        "recovery":  {
+                         "hrv_rmssd_milli":  68.60307,
+                         "score":  63.0,
+                         "resting_heart_rate":  58.0,
+                         "spo2_percentage":  96.888885,
+                         "skin_temp_celsius":  33.289665
+                     },
+        "strain":  {
+                       "calories":  2321,
+                       "strain":  6.6,
+                       "average_heart_rate":  69,
+                       "max_heart_rate":  126,
+                       "kilojoule":  9710.101
+                   },
+        "logged_at":  "2026-03-15T19:31:17.497Z",
         "body":  {
                      "weight_kg":  111.99196,
                      "weight_lbs":  246.9,

@@ -51,7 +51,27 @@ export default function SleepTrend({ records }) {
       rem: r.sleep.rem_sleep_hrs,
       light: r.sleep.light_sleep_hrs,
       awake: r.sleep.total_awake_hrs,
+      total: r.sleep.total_sleep_hrs || 0,
     }));
+
+  const avgSleep = chartData.length > 0
+    ? chartData.reduce((sum, d) => sum + d.total, 0) / chartData.length
+    : 0;
+  const current = chartData.length > 0 ? chartData[chartData.length - 1].total : 0;
+
+  const formatHrs = (h) => {
+    const hrs = Math.floor(h);
+    const mins = Math.round((h - hrs) * 60);
+    return `${hrs}h ${mins}m`;
+  };
+
+  const getSleepColor = (h) => {
+    if (h >= 7.5) return '#00E676';
+    if (h >= 7) return '#69F0AE';
+    if (h >= 6) return '#FFD600';
+    if (h >= 5) return '#FF9100';
+    return '#FF1744';
+  };
 
   return (
     <>
@@ -59,6 +79,12 @@ export default function SleepTrend({ records }) {
         title="Sleep Trend"
         headerRight={<><TimeframeSelector timeframe={timeframe} setTimeframe={setTimeframe} /><MaximizeButton onClick={() => setMaximized(true)} /></>}
       >
+        <div className="flex items-baseline gap-2 mb-3">
+          <span className="text-2xl font-bold" style={{ color: getSleepColor(current) }}>
+            {formatHrs(current)}
+          </span>
+          <span className="text-sm ml-auto">avg: <span style={{ color: getSleepColor(avgSleep) }}>{formatHrs(avgSleep)}</span></span>
+        </div>
         <SleepChart chartData={chartData} />
       </WidgetCard>
       {maximized && (

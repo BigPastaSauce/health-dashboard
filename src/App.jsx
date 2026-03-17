@@ -13,6 +13,7 @@ import StrainTrend from './components/StrainTrend';
 import VitalsCard from './components/VitalsCard';
 import HealthScore from './components/HealthScore';
 import HealthCalendar from './components/HealthCalendar';
+import CaloriesTrend from './components/CaloriesTrend';
 
 const LAYOUT_KEY = 'health-dashboard-order';
 const SIZES_KEY = 'health-dashboard-sizes';
@@ -23,13 +24,13 @@ const DEFAULT_ORDER = [
   'sleep', 'sleepDebt',
   'hrvTrend', 'recoveryTrend', 'weightTracker', 'strainTrend',
   'sleepTrend', 'workouts',
-  'calendar'
+  'caloriesTrend', 'calendar'
 ];
 
 const DEFAULT_SIZES = {
   healthScore: 2, recovery: 1, strain: 1, bodyStats: 1, vitals: 1,
   sleep: 2, sleepDebt: 2, hrvTrend: 1, recoveryTrend: 1, weightTracker: 1,
-  strainTrend: 1, sleepTrend: 2, workouts: 2, calendar: 2,
+  strainTrend: 1, sleepTrend: 2, workouts: 2, caloriesTrend: 2, calendar: 2,
 };
 
 // 1=1col, 2=2col, 3=3col, 4=4col(1row), 8=4col(2rows)
@@ -346,7 +347,7 @@ function App() {
       case 'recovery': return <RecoveryRing data={latestData} />;
       case 'strain': return <StrainGauge data={latestData} />;
       case 'bodyStats': return <BodyStats data={latestData} />;
-      case 'sleep': return <SleepSummary data={latestData} />;
+      case 'sleep': return <SleepSummary data={latestData} records={healthData} />;
       case 'sleepDebt': return <SleepDebtTracker sleepDebt={sleepDebt} sleepDebtAlltime={sleepDebtAlltime} records={healthData} />;
       case 'hrvTrend': return <HRVTrend records={healthData} />;
       case 'recoveryTrend': return <RecoveryTrend records={healthData} />;
@@ -356,6 +357,7 @@ function App() {
       case 'strainTrend': return <StrainTrend records={healthData} />;
       case 'vitals': return <VitalsCard records={healthData} />;
       case 'healthScore': return <HealthScore records={healthData} sleepDebtAlltime={sleepDebtAlltime} />;
+      case 'caloriesTrend': return <CaloriesTrend records={healthData} />;
       case 'calendar': return <HealthCalendar records={healthData} />;
       default: return null;
     }

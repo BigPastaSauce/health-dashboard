@@ -42,7 +42,7 @@ export default function HRVTrend({ records }) {
             {chartData.length > 0 ? chartData[chartData.length - 1].hrv : '--'}
           </span>
           <span className="text-sm text-whoop-textDim">ms</span>
-          <span className="text-xs text-whoop-textDim ml-auto">avg: {Math.round(avg)} ms</span>
+          <span className="text-sm text-whoop-textDim ml-auto">avg: {Math.round(avg)} ms</span>
         </div>
         {chart()}
       </WidgetCard>

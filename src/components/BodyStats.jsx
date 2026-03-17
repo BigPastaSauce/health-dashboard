@@ -12,7 +12,7 @@ export default function BodyStats({ data }) {
 
   const stats = [
     { label: 'Weight', value: `${weight_lbs}`, unit: 'lbs' },
-    { label: 'Weight', value: `${weight_kg}`, unit: 'kg' },
+    { label: 'Weight', value: `${weight_kg.toFixed(2)}`, unit: 'kg' },
     { label: 'Height', value: "5'8\"", unit: '' },
     { label: 'Height', value: `${(height_m * 100).toFixed(0)}`, unit: 'cm' },
     { label: 'Max HR', value: `${max_heart_rate}`, unit: 'bpm' },

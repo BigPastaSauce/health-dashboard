@@ -19,10 +19,10 @@ export default function StrainGauge({ data }) {
 
   return (
     <WidgetCard title="Strain" className="items-center">
-      <div className="flex flex-col items-center justify-center h-full flex-1">
-        {/* Arc gauge — fills available space */}
-        <div className="relative flex-1 w-full flex items-center justify-center min-h-0">
-          <div className="relative" style={{ width: '80%', maxWidth: 280 }}>
+      <div className="flex flex-col items-center h-full flex-1 justify-center">
+        {/* Arc gauge */}
+        <div className="relative w-full flex items-center justify-center mb-2">
+          <div className="relative" style={{ width: '85%', maxWidth: 300 }}>
             <svg viewBox="0 0 200 110" className="w-full h-auto">
               <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="#2a2a4a" strokeWidth="12" strokeLinecap="round" />
               <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke={color} strokeWidth="12" strokeLinecap="round"
@@ -37,7 +37,7 @@ export default function StrainGauge({ data }) {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 w-full mt-4 flex-shrink-0">
+        <div className="grid grid-cols-3 gap-4 w-full mt-0 flex-shrink-0">
           <div className="text-center">
             <div className="text-sm text-whoop-textDim mb-1">Calories</div>
             <div className="text-2xl font-bold text-whoop-text">{calories.toLocaleString()}</div>

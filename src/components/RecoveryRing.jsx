@@ -16,7 +16,8 @@ export default function RecoveryRing({ data }) {
   if (!data?.recovery) return null;
 
   const { score, zone, resting_heart_rate, hrv_rmssd_milli, spo2_percentage, skin_temp_celsius } = data.recovery;
-  const color = getZoneColor(zone);
+  const computedZone = zone || (score >= 67 ? 'GREEN' : score >= 34 ? 'YELLOW' : 'RED');
+  const color = getZoneColor(computedZone);
   const glow = getZoneGlow(zone);
   const circumference = 2 * Math.PI * 90;
   const strokeDashoffset = circumference - (score / 100) * circumference;
@@ -24,16 +25,16 @@ export default function RecoveryRing({ data }) {
   const stats = [
     { label: 'RHR', value: `${resting_heart_rate}`, unit: 'bpm' },
     { label: 'HRV', value: `${Math.round(hrv_rmssd_milli)}`, unit: 'ms' },
-    { label: 'SpO2', value: `${spo2_percentage}`, unit: '%' },
-    { label: 'Skin Temp', value: `${skin_temp_celsius}`, unit: '°C' },
+    { label: 'SpO2', value: `${spo2_percentage != null ? Math.round(spo2_percentage * 10) / 10 : '--'}`, unit: '%' },
+    { label: 'Skin Temp', value: `${skin_temp_celsius != null ? Math.round(skin_temp_celsius * 10) / 10 : '--'}`, unit: '°C' },
   ];
 
   return (
     <WidgetCard className="items-center justify-center">
-      <div className="flex flex-col items-center justify-center h-full flex-1">
-        {/* Ring — fills available space */}
-        <div className="relative flex-1 w-full flex items-center justify-center min-h-0">
-          <div className="relative" style={{ width: '75%', maxWidth: 280, aspectRatio: '1' }}>
+      <div className="flex flex-col items-center h-full flex-1 justify-center">
+        {/* Ring */}
+        <div className="relative w-full flex items-center justify-center mb-2">
+          <div className="relative" style={{ width: '65%', maxWidth: 240, aspectRatio: '1' }}>
             <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
               <circle cx="100" cy="100" r="90" fill="none" stroke="#2a2a4a" strokeWidth="10" />
               <circle
