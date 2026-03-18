@@ -183,7 +183,7 @@ function calculateCumulativeScore(records, sleepDebtAlltime) {
 export default function HealthScore({ records, sleepDebtAlltime }) {
   const [maximized, setMaximized] = useState(false);
   const [showCumulative, setShowCumulative] = useState(true);
-  const [showDaily, setShowDaily] = useState(false);
+  const [showDaily, setShowDaily] = useState(true);
   const { timeframe, setTimeframe, filteredRecords } = useTimeframeFilter(records);
 
   const computed = useMemo(() => {
@@ -246,7 +246,7 @@ export default function HealthScore({ records, sleepDebtAlltime }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#3a3a5a" />
           <XAxis dataKey="date" tick={{ fill: '#8888AA', fontSize: 11 }} />
           <YAxis tick={{ fill: '#8888AA', fontSize: 11 }} domain={[0, 100]} />
-          <Tooltip
+          <Tooltip isAnimationActive={false}
             contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8 }}
             labelStyle={{ color: '#9ca3af' }}
             formatter={(value, name) => [

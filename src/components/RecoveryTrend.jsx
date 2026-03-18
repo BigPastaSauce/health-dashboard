@@ -30,7 +30,7 @@ export default function RecoveryTrend({ records }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#3a3a5a" />
           <XAxis dataKey="date" tick={{ fill: '#8888AA', fontSize: 11 }} />
           <YAxis tick={{ fill: '#8888AA', fontSize: 11 }} domain={[0, 100]} />
-          <Tooltip
+          <Tooltip isAnimationActive={false}
             contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#E0E0E0' }}
             labelStyle={{ color: '#9ca3af' }}
             formatter={(value) => [<span style={{ color: getZoneColor(value) }}>{Math.round(value)}%</span>, <span style={{ color: '#9ca3af' }}>Recovery</span>]}

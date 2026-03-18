@@ -208,6 +208,8 @@ function App() {
   const [sleepDebtAlltime, setSleepDebtAlltime] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState('');
   const [widgetOrder, setWidgetOrder] = useState(loadOrder);
   const [widgetSizes, setWidgetSizes] = useState(loadSizes);
   const dragItem = useRef(null);
@@ -372,6 +374,43 @@ function App() {
             <p className="text-sm text-gray-500">{dateStr}</p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={async () => {
+                setRefreshing(true);
+                try {
+                  const resp = await fetch('/api/refresh', { method: 'POST' });
+                  const data = await resp.json();
+                  if (data.success) {
+                    setRefreshMsg(`Updated! ${data.total} days (${data.added} new, ${data.updated} updated)`);
+                    // Reload data
+                    const healthResp = await fetch('/api/health');
+                    if (healthResp.ok) {
+                      const newData = await healthResp.json();
+                      setHealthData(newData);
+                    }
+                  } else {
+                    setRefreshMsg(`Error: ${data.error}`);
+                  }
+                } catch (e) {
+                  setRefreshMsg(`Failed: ${e.message}`);
+                }
+                setRefreshing(false);
+                setTimeout(() => setRefreshMsg(''), 5000);
+              }}
+              disabled={refreshing}
+              className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                refreshing
+                  ? 'bg-[#161b22] border border-gray-700 text-gray-500 cursor-wait'
+                  : 'bg-[#161b22] border border-gray-700 text-gray-300 hover:border-[#448AFF]/50 hover:text-[#448AFF]'
+              }`}
+            >
+              {refreshing ? '⟳ Refreshing...' : '⟳ Refresh Data'}
+            </button>
+            {refreshMsg && (
+              <span className={`text-xs ${refreshMsg.startsWith('Error') || refreshMsg.startsWith('Failed') ? 'text-[#FF1744]' : 'text-[#00E676]'}`}>
+                {refreshMsg}
+              </span>
+            )}
             {editMode && (
               <button
                 onClick={resetLayout}

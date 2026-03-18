@@ -23,7 +23,7 @@ function RHRChart({ chartData, height = 'flex-1 min-h-0' }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#3a3a5a" />
           <XAxis dataKey="date" tick={{ fill: '#8888AA', fontSize: 10 }} />
           <YAxis tick={{ fill: '#8888AA', fontSize: 10 }} domain={['auto', 'auto']} />
-          <Tooltip contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#E0E0E0' }}
+          <Tooltip isAnimationActive={false} contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#E0E0E0' }}
             labelStyle={{ color: '#9ca3af' }}
             itemStyle={{ color: '#9ca3af' }} />
           <Line type="monotone" dataKey="rhr" stroke="#FF5252" strokeWidth={2} dot={{ fill: '#FF5252', r: 3 }} name="RHR" />

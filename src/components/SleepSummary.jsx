@@ -86,12 +86,17 @@ export default function SleepSummary({ data, records }) {
                     <Cell key={idx} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8 }}
-                  formatter={(value, name, props) => {
-                    const color = props.payload.color;
-                    const pct = Math.round((value / (totalSleep || 1)) * 100);
-                    return [<span style={{ color }}>{formatHrs(value)} ({pct}%)</span>, <span style={{ color: '#9ca3af' }}>{name}</span>];
+                <Tooltip isAnimationActive={false}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const p = payload[0];
+                    const color = p.payload.color;
+                    const pct = Math.round((p.value / (totalSleep || 1)) * 100);
+                    return (
+                      <div style={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, padding: '8px 12px' }}>
+                        <div style={{ color, fontSize: 13, fontWeight: 600 }}>{p.name}: {formatHrs(p.value)} ({pct}%)</div>
+                      </div>
+                    );
                   }}
                 />
               </PieChart>

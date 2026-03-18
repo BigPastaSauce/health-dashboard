@@ -75,7 +75,7 @@ function StrainChart({ chartData, height = 'flex-1 min-h-0', gradientId = 'strai
           <CartesianGrid strokeDasharray="3 3" stroke="#3a3a5a" />
           <XAxis dataKey="date" tick={{ fill: '#8888AA', fontSize: 11 }} />
           <YAxis tick={{ fill: '#8888AA', fontSize: 11 }} domain={[0, 21]} />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip isAnimationActive={false} content={<CustomTooltip />} />
           <Line
             type="linear"
             dataKey="strain"

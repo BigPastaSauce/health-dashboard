@@ -18,7 +18,7 @@ function DebtChart({ chartData, height = 'h-[280px]' }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#3a3a5a" />
           <XAxis dataKey="date" tick={{ fill: '#8888AA', fontSize: 11 }} />
           <YAxis tick={{ fill: '#8888AA', fontSize: 11 }} />
-          <Tooltip
+          <Tooltip isAnimationActive={false}
             contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, color: '#9ca3af' }}
             labelStyle={{ color: '#9ca3af' }}
             formatter={(value) => {
@@ -120,9 +120,8 @@ export default function SleepDebtTracker({ sleepDebt, sleepDebtAlltime, records 
   // Filter to selected week
   const chartData = useMemo(() => {
     if (selectedWeek === 'all') return allChartData;
-    if (selectedWeek === 'latest' && weeks.length > 0) {
-      const last = weeks[weeks.length - 1];
-      return allChartData.slice(last.start, last.end);
+    if (selectedWeek === 'latest') {
+      return allChartData.slice(-7);
     }
     const week = weeks.find(w => w.key === selectedWeek);
     if (week) return allChartData.slice(week.start, week.end);

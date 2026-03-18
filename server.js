@@ -1,8 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -78,6 +79,236 @@ app.get('/api/sleep-debt/alltime', (req, res) => {
   const data = readJSON(SLEEP_DEBT_ALLTIME_PATH);
   if (!data) return res.status(404).json({ error: 'No all-time sleep debt data found' });
   res.json(data);
+});
+
+// POST /api/refresh — pull all data from Whoop API and update unified records
+app.post('/api/refresh', async (req, res) => {
+  try {
+    // Refresh Whoop token first
+    try {
+      execSync('powershell -ExecutionPolicy Bypass -File "C:/Users/clawdbot/Projects/whoop-integration/refresh-token.ps1"', { timeout: 15000 });
+    } catch (e) { /* token might still be valid */ }
+
+    const tokensPath = 'C:/Users/clawdbot/Projects/whoop-integration/tokens.json';
+    const tokens = readJSON(tokensPath);
+    if (!tokens?.access_token) return res.status(500).json({ error: 'No Whoop access token' });
+
+    const headers = { 'Authorization': `Bearer ${tokens.access_token}` };
+    const BASE = 'https://api.prod.whoop.com/developer/v1';
+
+    // Load existing records
+    let records = readJSON(UNIFIED_RECORDS_PATH) || [];
+    const existingDates = new Set(records.map(r => r.date));
+
+    // Determine date range: from earliest existing or 103 days ago
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - 120); // go back 120 days to be safe
+
+    // Fetch all cycles (strain data)
+    let allCycles = [];
+    let nextToken = null;
+    do {
+      const params = new URLSearchParams({ start: startDate.toISOString(), end: now.toISOString(), limit: '50' });
+      if (nextToken) params.set('nextToken', nextToken);
+      const resp = await fetch(`${BASE}/cycle?${params}`, { headers });
+      if (!resp.ok) break;
+      const data = await resp.json();
+      allCycles.push(...(data.records || []));
+      nextToken = data.next_token || null;
+    } while (nextToken);
+
+    // Fetch all recoveries
+    let allRecoveries = [];
+    nextToken = null;
+    do {
+      const params = new URLSearchParams({ start: startDate.toISOString(), end: now.toISOString(), limit: '50' });
+      if (nextToken) params.set('nextToken', nextToken);
+      const resp = await fetch(`${BASE}/recovery?${params}`, { headers });
+      if (!resp.ok) break;
+      const data = await resp.json();
+      allRecoveries.push(...(data.records || []));
+      nextToken = data.next_token || null;
+    } while (nextToken);
+
+    // Fetch all sleeps
+    let allSleeps = [];
+    nextToken = null;
+    do {
+      const params = new URLSearchParams({ start: startDate.toISOString(), end: now.toISOString(), limit: '50' });
+      if (nextToken) params.set('nextToken', nextToken);
+      const resp = await fetch(`${BASE}/sleep?${params}`, { headers });
+      if (!resp.ok) break;
+      const data = await resp.json();
+      allSleeps.push(...(data.records || []));
+      nextToken = data.next_token || null;
+    } while (nextToken);
+
+    // Fetch all workouts
+    let allWorkouts = [];
+    nextToken = null;
+    do {
+      const params = new URLSearchParams({ start: startDate.toISOString(), end: now.toISOString(), limit: '50' });
+      if (nextToken) params.set('nextToken', nextToken);
+      const resp = await fetch(`${BASE}/workout?${params}`, { headers });
+      if (!resp.ok) break;
+      const data = await resp.json();
+      allWorkouts.push(...(data.records || []));
+      nextToken = data.next_token || null;
+    } while (nextToken);
+
+    // Fetch body measurement
+    let bodyData = { weight_kg: 112, weight_lbs: 246.9, height_m: 1.7272, max_heart_rate: 188 };
+    try {
+      const resp = await fetch(`${BASE}/body/measurement`, { headers });
+      if (resp.ok) {
+        const bm = await resp.json();
+        if (bm.weight_kilogram) bodyData.weight_kg = bm.weight_kilogram;
+        if (bm.weight_kilogram) bodyData.weight_lbs = Math.round(bm.weight_kilogram * 2.20462 * 10) / 10;
+        if (bm.height_meter) bodyData.height_m = bm.height_meter;
+        if (bm.max_heart_rate) bodyData.max_heart_rate = bm.max_heart_rate;
+      }
+    } catch (e) { /* use defaults */ }
+
+    // Index by date
+    const cyclesByDate = {};
+    for (const c of allCycles) {
+      const d = c.start?.slice(0, 10);
+      if (d) cyclesByDate[d] = c;
+    }
+    const recoveryByDate = {};
+    for (const r of allRecoveries) {
+      const d = r.cycle?.start?.slice(0, 10) || r.created_at?.slice(0, 10);
+      if (d) recoveryByDate[d] = r;
+    }
+    const sleepByDate = {};
+    for (const s of allSleeps) {
+      const d = s.start?.slice(0, 10);
+      if (d && !s.nap) sleepByDate[d] = s;
+    }
+    const workoutsByDate = {};
+    for (const w of allWorkouts) {
+      const d = w.start?.slice(0, 10);
+      if (!d) continue;
+      if (!workoutsByDate[d]) workoutsByDate[d] = [];
+      workoutsByDate[d].push(w);
+    }
+
+    // Collect all dates
+    const allDates = new Set([
+      ...Object.keys(cyclesByDate),
+      ...Object.keys(recoveryByDate),
+      ...Object.keys(sleepByDate),
+      ...Object.keys(workoutsByDate)
+    ]);
+
+    let added = 0, updated = 0;
+    for (const date of allDates) {
+      const cycle = cyclesByDate[date];
+      const recovery = recoveryByDate[date];
+      const sleep = sleepByDate[date];
+      const workouts = workoutsByDate[date];
+
+      const record = { date, body: bodyData };
+
+      if (cycle?.score) {
+        record.strain = {
+          strain: cycle.score.strain,
+          calories: cycle.score.kilojoule ? Math.round(cycle.score.kilojoule / 4.184) : null,
+          average_heart_rate: cycle.score.average_heart_rate,
+          max_heart_rate: cycle.score.max_heart_rate,
+          kilojoule: cycle.score.kilojoule
+        };
+      }
+
+      if (recovery?.score) {
+        record.recovery = {
+          score: recovery.score.recovery_score,
+          resting_heart_rate: recovery.score.resting_heart_rate,
+          hrv_rmssd_milli: recovery.score.hrv_rmssd_milli,
+          spo2_percentage: recovery.score.spo2_percentage,
+          skin_temp_celsius: recovery.score.skin_temp_celsius
+        };
+      }
+
+      if (sleep?.score) {
+        const stage = sleep.score.stage_summary || {};
+        record.sleep = {
+          start: sleep.start,
+          end: sleep.end,
+          total_sleep_hrs: (
+            (stage.total_light_sleep_time_milli || 0) +
+            (stage.total_slow_wave_sleep_time_milli || 0) +
+            (stage.total_rem_sleep_time_milli || 0)
+          ) / 3600000,
+          deep_sleep_hrs: (stage.total_slow_wave_sleep_time_milli || 0) / 3600000,
+          rem_sleep_hrs: (stage.total_rem_sleep_time_milli || 0) / 3600000,
+          light_sleep_hrs: (stage.total_light_sleep_time_milli || 0) / 3600000,
+          total_awake_hrs: (stage.total_awake_time_milli || 0) / 3600000,
+          total_in_bed_hrs: (stage.total_in_bed_time_milli || 0) / 3600000,
+          sleep_efficiency: sleep.score.sleep_efficiency_percentage,
+          respiratory_rate: sleep.score.respiratory_rate,
+          sleep_consistency: sleep.score.sleep_consistency_percentage,
+          sleep_performance: sleep.score.sleep_performance_percentage,
+          sleep_cycles: stage.sleep_cycle_count,
+          disturbances: stage.disturbance_count
+        };
+      }
+
+      if (workouts?.length) {
+        record.workouts = workouts.map(w => ({
+          strain: w.score?.strain,
+          max_hr: w.score?.max_heart_rate,
+          avg_hr: w.score?.average_heart_rate,
+          calories: w.score?.kilojoule ? Math.round(w.score.kilojoule / 4.184) : null,
+          duration_min: w.score?.distance_meter ? null : (w.end && w.start ? Math.round((new Date(w.end) - new Date(w.start)) / 60000 * 10) / 10 : null),
+          sport: w.sport_id?.toString(),
+          start: w.start,
+          end: w.end
+        }));
+      }
+
+      // Replace or add
+      const existingIdx = records.findIndex(r => r.date === date);
+      if (existingIdx >= 0) {
+        // Merge: keep existing fields, update with new data
+        const existing = records[existingIdx];
+        records[existingIdx] = { ...existing, ...record };
+        updated++;
+      } else {
+        records.push(record);
+        added++;
+      }
+    }
+
+    // Sort
+    records.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+    // Deduplicate
+    const seenDates = new Set();
+    records = records.filter(r => {
+      if (!r.date || seenDates.has(r.date)) return false;
+      seenDates.add(r.date);
+      return true;
+    });
+
+    // Save
+    writeFileSync(UNIFIED_RECORDS_PATH, JSON.stringify(records), 'utf-8');
+
+    res.json({
+      success: true,
+      total: records.length,
+      added,
+      updated,
+      cycles: allCycles.length,
+      recoveries: allRecoveries.length,
+      sleeps: allSleeps.length,
+      workouts: allWorkouts.length
+    });
+  } catch (err) {
+    console.error('Refresh error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Serve built React app in production
