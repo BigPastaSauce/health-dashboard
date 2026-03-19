@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import RecoveryRing from './components/RecoveryRing';
 import SleepSummary from './components/SleepSummary';
 import StrainGauge from './components/StrainGauge';
@@ -14,6 +15,8 @@ import VitalsCard from './components/VitalsCard';
 import HealthScore from './components/HealthScore';
 import HealthCalendar from './components/HealthCalendar';
 import CaloriesTrend from './components/CaloriesTrend';
+import AchievementBar from './components/AchievementBar';
+import { useGamification } from './hooks/useGamification';
 
 const LAYOUT_KEY = 'health-dashboard-order';
 const SIZES_KEY = 'health-dashboard-sizes';
@@ -33,8 +36,6 @@ const DEFAULT_SIZES = {
   strainTrend: 1, sleepTrend: 2, workouts: 2, caloriesTrend: 2, calendar: 2,
 };
 
-// 1=1col, 2=2col, 3=3col, 4=4col(1row), 8=4col(2rows)
-// Using fixed row height of 160px with gap 16px
 const SIZE_CLASSES = {
   1: 'col-span-1',
   2: 'col-span-1 lg:col-span-2',
@@ -81,13 +82,7 @@ function ResizeHandles({ widgetKey, currentSize, gridRef, onResize }) {
     widgets.forEach(w => {
       if (w.dataset.widgetKey === widgetKey) return;
       const rect = w.getBoundingClientRect();
-      frozen.push({
-        el: w,
-        top: rect.top - gridRect.top,
-        left: rect.left - gridRect.left,
-        width: rect.width,
-        height: rect.height,
-      });
+      frozen.push({ el: w, top: rect.top - gridRect.top, left: rect.left - gridRect.left, width: rect.width, height: rect.height });
     });
     frozen.forEach(f => {
       f.el.style.position = 'absolute';
@@ -135,18 +130,11 @@ function ResizeHandles({ widgetKey, currentSize, gridRef, onResize }) {
     const startWidth = startRect.width;
 
     freezeOtherWidgets();
-
     let latestSize = currentSize;
 
     const onMouseMove = (ev) => {
       const deltaX = ev.clientX - startX;
-      // Use absolute width change regardless of which edge
-      const desiredWidth = startWidth + Math.abs(deltaX) * (deltaX > 0 ? 1 : -1);
-      // For left/right edges, just track total desired cols
-      const desiredCols = Math.max(1, Math.min(4, Math.round(desiredWidth / colWidth)));
-      // For shrinking from left edge, deltaX is negative but we still want fewer cols
       const actualCols = Math.max(1, Math.min(4, Math.round((startWidth + deltaX) / colWidth)));
-
       const newSize = actualCols;
       if (newSize !== latestSize) {
         latestSize = newSize;
@@ -159,11 +147,7 @@ function ResizeHandles({ widgetKey, currentSize, gridRef, onResize }) {
       setDragging(false);
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          unfreezeWidgets();
-        });
-      });
+      requestAnimationFrame(() => { requestAnimationFrame(() => { unfreezeWidgets(); }); });
       setPreview(null);
     };
 
@@ -172,27 +156,18 @@ function ResizeHandles({ widgetKey, currentSize, gridRef, onResize }) {
   }, [widgetKey, gridRef, onResize, currentSize, freezeOtherWidgets, unfreezeWidgets]);
 
   const edgeClass = `absolute z-10 opacity-0 hover:opacity-100 transition-opacity ${dragging ? 'opacity-100' : ''}`;
-  const edgeHighlight = 'bg-[#00E676]/20';
+  const edgeHighlight = 'bg-[#00E676]/15';
 
   return (
     <>
-      {/* Left edge */}
       <div onMouseDown={startResize} className={`${edgeClass} ${edgeHighlight} left-0 top-2 bottom-2 w-2 cursor-ew-resize rounded-l-md`} />
-      {/* Right edge */}
       <div onMouseDown={startResize} className={`${edgeClass} ${edgeHighlight} right-0 top-2 bottom-2 w-2 cursor-ew-resize rounded-r-md`} />
-      {/* Top edge */}
       <div onMouseDown={startResize} className={`${edgeClass} ${edgeHighlight} top-0 left-2 right-2 h-2 cursor-ns-resize rounded-t-md`} />
-      {/* Bottom edge */}
       <div onMouseDown={startResize} className={`${edgeClass} ${edgeHighlight} bottom-0 left-2 right-2 h-2 cursor-ns-resize rounded-b-md`} />
-      {/* Top-left corner */}
       <div onMouseDown={startResize} className={`${edgeClass} ${edgeHighlight} top-0 left-0 w-4 h-4 cursor-nwse-resize rounded-tl-xl`} />
-      {/* Top-right corner */}
       <div onMouseDown={startResize} className={`${edgeClass} ${edgeHighlight} top-0 right-0 w-4 h-4 cursor-nesw-resize rounded-tr-xl`} />
-      {/* Bottom-left corner */}
       <div onMouseDown={startResize} className={`${edgeClass} ${edgeHighlight} bottom-0 left-0 w-4 h-4 cursor-nesw-resize rounded-bl-xl`} />
-      {/* Bottom-right corner */}
       <div onMouseDown={startResize} className={`${edgeClass} ${edgeHighlight} bottom-0 right-0 w-4 h-4 cursor-nwse-resize rounded-br-xl`} />
-      {/* Size badge */}
       {dragging && preview && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#00E676] text-black text-sm font-bold px-3 py-1 rounded-lg shadow-lg z-20">
           {SIZE_LABELS[preview]}
@@ -229,6 +204,8 @@ function App() {
     });
   }, []);
 
+  const gamification = useGamification(healthData, sleepDebtAlltime);
+
   const toggleEditMode = () => {
     if (editMode) {
       localStorage.setItem(LAYOUT_KEY, JSON.stringify(widgetOrder));
@@ -253,7 +230,6 @@ function App() {
   }, []);
 
   const [dropTarget, setDropTarget] = useState({ key: null, side: null });
-
   const scrollRaf = useRef(null);
 
   const handleDragStart = (e, key) => {
@@ -262,9 +238,7 @@ function App() {
     e.dataTransfer.setData('text/plain', key);
     const el = e.currentTarget;
     setTimeout(() => el.style.opacity = '0.4', 0);
-
-    const EDGE = 80;
-    const SPEED = 12;
+    const EDGE = 80, SPEED = 12;
     const tick = () => {
       const y = lastDragY.current;
       if (y < EDGE) window.scrollBy(0, -SPEED);
@@ -291,29 +265,23 @@ function App() {
   };
 
   const handleDragLeave = (e) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) {
-      setDropTarget({ key: null, side: null });
-    }
+    if (!e.currentTarget.contains(e.relatedTarget)) setDropTarget({ key: null, side: null });
   };
 
   const handleDrop = (e, targetKey) => {
     e.preventDefault();
     const draggedKey = dragItem.current;
     if (!draggedKey || draggedKey === targetKey) return;
-
     const rect = e.currentTarget.getBoundingClientRect();
     const midX = rect.left + rect.width / 2;
     const side = e.clientX < midX ? 'left' : 'right';
-
     const newOrder = [...widgetOrder];
     const fromIdx = newOrder.indexOf(draggedKey);
     if (fromIdx === -1) return;
     newOrder.splice(fromIdx, 1);
     const toIdx = newOrder.indexOf(targetKey);
     if (toIdx === -1) return;
-    const insertIdx = side === 'left' ? toIdx : toIdx + 1;
-    newOrder.splice(insertIdx, 0, draggedKey);
-
+    newOrder.splice(side === 'left' ? toIdx : toIdx + 1, 0, draggedKey);
     setWidgetOrder(newOrder);
     localStorage.setItem(LAYOUT_KEY, JSON.stringify(newOrder));
     dragItem.current = null;
@@ -324,18 +292,22 @@ function App() {
     dragItem.current = null;
     dragOverItem.current = null;
     setDropTarget({ key: null, side: null });
-    if (scrollRaf.current) {
-      cancelAnimationFrame(scrollRaf.current);
-      scrollRaf.current = null;
-    }
+    if (scrollRaf.current) { cancelAnimationFrame(scrollRaf.current); scrollRaf.current = null; }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#00E676] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Loading health data...</p>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+            className="w-16 h-16 border-3 border-[#00E676]/30 border-t-[#00E676] rounded-full mx-auto mb-4"
+          />
+          <motion.p 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+            className="text-gray-500 text-sm"
+          >Loading health data...</motion.p>
         </div>
       </div>
     );
@@ -346,10 +318,10 @@ function App() {
 
   const renderWidget = (key) => {
     switch (key) {
-      case 'recovery': return <RecoveryRing data={latestData} />;
-      case 'strain': return <StrainGauge data={latestData} />;
+      case 'recovery': return <RecoveryRing data={latestData} comparison={gamification.comparisons?.recovery} />;
+      case 'strain': return <StrainGauge data={latestData} comparison={gamification.comparisons?.strain} />;
       case 'bodyStats': return <BodyStats data={latestData} />;
-      case 'sleep': return <SleepSummary data={latestData} records={healthData} />;
+      case 'sleep': return <SleepSummary data={latestData} records={healthData} comparison={gamification.comparisons?.sleep} />;
       case 'sleepDebt': return <SleepDebtTracker sleepDebt={sleepDebt} sleepDebtAlltime={sleepDebtAlltime} records={healthData} />;
       case 'hrvTrend': return <HRVTrend records={healthData} />;
       case 'recoveryTrend': return <RecoveryTrend records={healthData} />;
@@ -366,15 +338,31 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d1117]">
-      <header className="sticky top-0 z-50 bg-[#0d1117]/80 backdrop-blur-md border-b border-gray-800">
-        <div className="max-w-[1920px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Health Dashboard</h1>
-            <p className="text-sm text-gray-500">{dateStr}</p>
-          </div>
+    <div className="min-h-screen bg-[#0a0a0f]">
+      {/* Subtle background gradient */}
+      <div className="fixed inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse at 50% 0%, rgba(0, 230, 118, 0.03) 0%, transparent 50%), radial-gradient(ellipse at 80% 50%, rgba(68, 138, 255, 0.02) 0%, transparent 40%)',
+      }} />
+
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#0a0a0f]/70 backdrop-blur-xl border-b border-white/[0.04]">
+        <div className="max-w-[1920px] mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
+            <div className="flex items-center gap-2">
+              {/* Pulse indicator */}
+              <motion.div 
+                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="w-2 h-2 rounded-full bg-[#00E676]"
+              />
+              <h1 className="text-lg font-bold text-white tracking-tight">Health Dashboard</h1>
+            </div>
+            <span className="text-xs text-gray-600 font-mono">{dateStr}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={async () => {
                 setRefreshing(true);
                 try {
@@ -382,7 +370,6 @@ function App() {
                   const data = await resp.json();
                   if (data.success) {
                     setRefreshMsg(`Updated! ${data.total} days (${data.added} new, ${data.updated} updated)`);
-                    // Reload data
                     const healthResp = await fetch('/api/health');
                     if (healthResp.ok) {
                       const newData = await healthResp.json();
@@ -398,42 +385,63 @@ function App() {
                 setTimeout(() => setRefreshMsg(''), 5000);
               }}
               disabled={refreshing}
-              className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-all ${
                 refreshing
-                  ? 'bg-[#161b22] border border-gray-700 text-gray-500 cursor-wait'
-                  : 'bg-[#161b22] border border-gray-700 text-gray-300 hover:border-[#448AFF]/50 hover:text-[#448AFF]'
+                  ? 'bg-white/[0.02] border border-white/[0.04] text-gray-600 cursor-wait'
+                  : 'bg-white/[0.03] border border-white/[0.06] text-gray-400 hover:border-[#448AFF]/30 hover:text-[#448AFF]'
               }`}
             >
-              {refreshing ? '⟳ Refreshing...' : '⟳ Refresh Data'}
-            </button>
-            {refreshMsg && (
-              <span className={`text-xs ${refreshMsg.startsWith('Error') || refreshMsg.startsWith('Failed') ? 'text-[#FF1744]' : 'text-[#00E676]'}`}>
-                {refreshMsg}
-              </span>
-            )}
+              {refreshing ? (
+                <span className="flex items-center gap-1.5">
+                  <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>⟳</motion.span>
+                  Refreshing...
+                </span>
+              ) : '⟳ Refresh'}
+            </motion.button>
+            <AnimatePresence>
+              {refreshMsg && (
+                <motion.span 
+                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+                  className={`text-[10px] ${refreshMsg.startsWith('Error') || refreshMsg.startsWith('Failed') ? 'text-[#FF5252]' : 'text-[#00E676]'}`}
+                >
+                  {refreshMsg}
+                </motion.span>
+              )}
+            </AnimatePresence>
             {editMode && (
-              <button
-                onClick={resetLayout}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-              >
-                Reset Layout
+              <button onClick={resetLayout} className="px-3 py-1.5 text-[10px] font-medium rounded-xl border border-white/[0.06] text-gray-500 hover:text-white hover:border-white/[0.1] transition-colors">
+                Reset
               </button>
             )}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={toggleEditMode}
-              className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-all ${
                 editMode
-                  ? 'bg-[#00E676] text-black'
-                  : 'bg-[#161b22] border border-gray-700 text-gray-300 hover:border-[#00E676]/50'
+                  ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/20'
+                  : 'bg-white/[0.03] border border-white/[0.06] text-gray-400 hover:border-[#00E676]/20'
               }`}
             >
-              {editMode ? '✓ Save Layout' : '✎ Edit Layout'}
-            </button>
+              {editMode ? '✓ Save' : '✎ Edit'}
+            </motion.button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-[1920px] mx-auto px-6 py-6">
+      <main className="max-w-[1920px] mx-auto px-6 py-5 relative z-10">
+        {/* Achievement Bar */}
+        {!editMode && (
+          <AchievementBar 
+            badges={gamification.badges} 
+            level={gamification.level} 
+            challenge={gamification.challenge}
+            streaks={gamification.streaks}
+            gamification={gamification}
+          />
+        )}
+
+        {/* Widget Grid */}
         <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style={{ gridAutoRows: '160px', gridAutoFlow: 'dense', transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}>
           {widgetOrder.filter(key => DEFAULT_ORDER.includes(key)).map((key, idx) => {
             const size = widgetSizes[key] || 1;
@@ -443,7 +451,7 @@ function App() {
                 data-widget-key={key}
                 className={`${SIZE_CLASSES[size]} relative ${
                   editMode ? 'cursor-grab active:cursor-grabbing' : ''
-                } ${editMode ? 'ring-2 ring-dashed ring-gray-600 hover:ring-[#00E676]/50 rounded-2xl' : ''}`}
+                } ${editMode ? 'ring-1 ring-dashed ring-white/10 hover:ring-[#00E676]/30 rounded-2xl' : ''}`}
                 style={{ minHeight: 0, gridRow: `span ${size === 8 ? 6 : 3}`, transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}
                 draggable={editMode}
                 onDragStart={(e) => handleDragStart(e, key)}
@@ -452,32 +460,26 @@ function App() {
                 onDrop={(e) => handleDrop(e, key)}
                 onDragEnd={handleDragEnd}
               >
-                {/* Drop indicator - left */}
                 {editMode && dropTarget.key === key && dropTarget.side === 'left' && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#00E676] rounded-full z-20 shadow-[0_0_8px_#00E676]" />
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#00E676] rounded-full z-20 shadow-[0_0_12px_#00E676]" />
                 )}
-                {/* Drop indicator - right */}
                 {editMode && dropTarget.key === key && dropTarget.side === 'right' && (
-                  <div className="absolute right-0 top-0 bottom-0 w-1 bg-[#00E676] rounded-full z-20 shadow-[0_0_8px_#00E676]" />
+                  <div className="absolute right-0 top-0 bottom-0 w-1 bg-[#00E676] rounded-full z-20 shadow-[0_0_12px_#00E676]" />
                 )}
                 {renderWidget(key)}
                 {editMode && (
                   <>
-                    {/* Size indicator badge */}
-                    <div className="absolute top-2 left-2 z-10 bg-[#1a1a2e]/90 border border-gray-600 rounded-md px-2 py-0.5 text-[10px] font-mono text-gray-400">
+                    <div className="absolute top-2 left-2 z-10 bg-[#0a0a0f]/90 border border-white/[0.06] rounded-lg px-2 py-0.5 text-[9px] font-mono text-gray-500">
                       {SIZE_LABELS[size]}
                     </div>
-                    {/* Size picker dropdown */}
                     <div className="absolute top-2 right-2 z-10">
                       <select
                         value={size}
                         onChange={(e) => handleResize(key, Number(e.target.value))}
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-[#1a1a2e] text-[11px] text-gray-300 border border-gray-600 rounded-md px-2 py-1 outline-none focus:border-[#00E676] cursor-pointer hover:border-gray-400 transition-colors"
+                        className="bg-[#0a0a0f] text-[10px] text-gray-400 border border-white/[0.06] rounded-lg px-2 py-1 outline-none focus:border-[#00E676]/30 cursor-pointer"
                       >
-                        {SIZE_STEPS.map(s => (
-                          <option key={s} value={s}>{SIZE_LABELS[s]}</option>
-                        ))}
+                        {SIZE_STEPS.map(s => (<option key={s} value={s}>{SIZE_LABELS[s]}</option>))}
                       </select>
                     </div>
                   </>

@@ -1,24 +1,16 @@
 import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import WidgetCard from './WidgetCard';
 
-// Composite day score: considers recovery (40%), sleep (35%), strain (25%)
-// Rule: if a day has data (e.g. strain) but NO sleep/recovery, it means
-// the user didn't sleep — treat as 0 sleep and 0 recovery (bad day)
 function getDayScore(data) {
   if (!data) return null;
-
   const hasAnyData = data.recovery || data.sleep || data.strain;
   if (!hasAnyData) return null;
 
-  // If day has data but missing sleep → didn't sleep = 0
   const missingSleep = !data.sleep?.total_sleep_hrs;
-  // If day has data but missing recovery → no recovery recorded = 0
   const missingRecovery = data.recovery?.score == null;
-
-  // Recovery score (0-100), default 0 if missing but day has other data
   const recoveryScore = missingRecovery ? 0 : data.recovery.score;
 
-  // Sleep score
   let sleepScore = 0;
   if (!missingSleep) {
     const hrs = data.sleep.total_sleep_hrs;
@@ -29,10 +21,8 @@ function getDayScore(data) {
     else if (hrs >= 4) sleepScore = 25;
     else sleepScore = 10;
   }
-  // missingSleep stays 0 — no sleep is bad
 
-  // Strain score (10-18 is ideal)
-  let strainScore = 50; // neutral default
+  let strainScore = 50;
   if (data.strain?.strain != null) {
     const s = data.strain.strain;
     if (s >= 10 && s <= 18) strainScore = 100;
@@ -42,22 +32,20 @@ function getDayScore(data) {
     else strainScore = 20;
   }
 
-  const total = recoveryScore * 0.4 + sleepScore * 0.35 + strainScore * 0.25;
-  return Math.round(total);
+  return Math.round(recoveryScore * 0.4 + sleepScore * 0.35 + strainScore * 0.25);
 }
 
-// Smooth red → orange → yellow → green gradient
 function getDayColor(score) {
-  if (score == null) return '#1a1a2e';
-  if (score >= 90) return '#00E676'; // Bright green
-  if (score >= 80) return '#4CAF50'; // Green
-  if (score >= 70) return '#8BC34A'; // Light green
-  if (score >= 60) return '#CDDC39'; // Yellow-green
-  if (score >= 50) return '#FFD600'; // Yellow
-  if (score >= 40) return '#FFAB00'; // Amber
-  if (score >= 30) return '#FF9100'; // Orange
-  if (score >= 20) return '#FF5722'; // Deep orange
-  return '#FF1744';                   // Red
+  if (score == null) return 'rgba(255,255,255,0.02)';
+  if (score >= 90) return '#00E676';
+  if (score >= 80) return '#4CAF50';
+  if (score >= 70) return '#8BC34A';
+  if (score >= 60) return '#CDDC39';
+  if (score >= 50) return '#FFD600';
+  if (score >= 40) return '#FFAB00';
+  if (score >= 30) return '#FF9100';
+  if (score >= 20) return '#FF5722';
+  return '#FF5252';
 }
 
 function getDayLabel(score) {
@@ -70,34 +58,12 @@ function getDayLabel(score) {
   return 'Poor';
 }
 
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-function getRecoveryColor(score) {
-  if (score == null) return '#666';
-  if (score >= 67) return '#00E676';
-  if (score >= 34) return '#FFD600';
-  return '#FF1744';
-}
-
-function getSleepColor(hrs) {
-  if (hrs == null) return '#666';
-  if (hrs >= 7.5) return '#00E676';
-  if (hrs >= 7) return '#69F0AE';
-  if (hrs >= 6) return '#FFD600';
-  if (hrs >= 5) return '#FF9100';
-  return '#FF1744';
-}
-
-function getStrainColor(s) {
-  if (s == null) return '#666';
-  if (s >= 18) return '#00E676';
-  if (s >= 14) return '#69F0AE';
-  if (s >= 10) return '#FFD600';
-  if (s >= 6) return '#FF9100';
-  return '#FF1744';
-}
+function getRecoveryColor(score) { return score == null ? '#555' : score >= 67 ? '#00E676' : score >= 34 ? '#FFD600' : '#FF5252'; }
+function getSleepColor(hrs) { return hrs == null ? '#555' : hrs >= 7.5 ? '#00E676' : hrs >= 6 ? '#FFD600' : '#FF5252'; }
+function getStrainColor(s) { return s == null ? '#555' : s >= 14 ? '#00E676' : s >= 10 ? '#FFD600' : '#FF9100'; }
 
 export default function HealthCalendar({ records }) {
   const today = new Date();
@@ -131,20 +97,19 @@ export default function HealthCalendar({ records }) {
 
   return (
     <WidgetCard title="Health Calendar">
-      <div className="flex gap-4 h-full">
-        {/* Calendar grid */}
+      <div className="flex gap-5 h-full">
         <div className="flex-1 min-w-0 flex flex-col h-full">
-          {/* Month nav */}
-          <div className="flex items-center justify-center gap-4 mb-1 relative">
-            <button onClick={prevMonth} className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+          {/* Month nav — more visible */}
+          <div className="flex items-center justify-center gap-5 mb-3 relative">
+            <button onClick={prevMonth} className="p-2 text-gray-400 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
             </button>
-            <button onClick={() => setShowMonthPicker(!showMonthPicker)} className="text-sm font-semibold text-white hover:text-[#00E676] transition-colors cursor-pointer">
+            <button onClick={() => setShowMonthPicker(!showMonthPicker)} className="text-sm font-bold text-gray-200 hover:text-[#00E676] transition-colors cursor-pointer px-3 py-1 rounded-lg hover:bg-white/[0.04]">
               {MONTH_NAMES[month]} {year}
             </button>
             {showMonthPicker && (
-              <div className="absolute z-50 mt-1 top-8 bg-[#161b22] border border-gray-700 rounded-xl p-3 shadow-2xl shadow-black/50" style={{ left: '50%', transform: 'translateX(-50%)' }}>
-                <div className="grid grid-cols-3 gap-2 mb-2">
+              <div className="absolute z-50 mt-1 top-10 bg-[#12131a] border border-white/[0.08] rounded-xl p-4 shadow-2xl" style={{ left: '50%', transform: 'translateX(-50%)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
+                <div className="grid grid-cols-3 gap-2 mb-3">
                   {MONTH_NAMES.map((m, i) => {
                     const key = `${year}-${String(i + 1).padStart(2, '0')}`;
                     const hasData = Object.keys(dataByDate).some(d => d.startsWith(key));
@@ -152,45 +117,41 @@ export default function HealthCalendar({ records }) {
                       <button key={i}
                         onClick={() => { if (hasData) { setMonth(i); setShowMonthPicker(false); setSelectedDay(null); } }}
                         disabled={!hasData}
-                        className={`px-2 py-1.5 text-xs rounded-lg transition-all ${
-                          i === month ? 'bg-[#00E676]/20 text-[#00E676] font-bold'
-                          : hasData ? 'text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer'
+                        className={`px-3 py-2 text-xs rounded-lg transition-all ${
+                          i === month ? 'bg-[#00E676]/10 text-[#00E676] font-bold border border-[#00E676]/15'
+                          : hasData ? 'text-gray-400 hover:text-white hover:bg-white/[0.04] cursor-pointer'
                           : 'text-gray-700 cursor-not-allowed'
                         }`}>{m.slice(0, 3)}</button>
                     );
                   })}
                 </div>
-                <div className="flex items-center justify-center gap-3 border-t border-gray-700 pt-2">
+                <div className="flex items-center justify-center gap-3 border-t border-white/[0.06] pt-2">
                   {Object.keys(dataByDate).some(d => d.startsWith(`${year - 1}-`)) ? (
-                    <button onClick={() => setYear(y => y - 1)} className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-white/5">← {year - 1}</button>
-                  ) : (
-                    <span className="text-xs text-gray-700 px-2 py-1">← {year - 1}</span>
-                  )}
-                  <span className="text-xs font-semibold text-white">{year}</span>
+                    <button onClick={() => setYear(y => y - 1)} className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-white/[0.04]">← {year - 1}</button>
+                  ) : (<span className="text-xs text-gray-700 px-2 py-1">← {year - 1}</span>)}
+                  <span className="text-xs font-bold text-white">{year}</span>
                   {Object.keys(dataByDate).some(d => d.startsWith(`${year + 1}-`)) ? (
-                    <button onClick={() => setYear(y => y + 1)} className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-white/5">{year + 1} →</button>
-                  ) : (
-                    <span className="text-xs text-gray-700 px-2 py-1">{year + 1} →</span>
-                  )}
+                    <button onClick={() => setYear(y => y + 1)} className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-white/[0.04]">{year + 1} →</button>
+                  ) : (<span className="text-xs text-gray-700 px-2 py-1">{year + 1} →</span>)}
                 </div>
               </div>
             )}
-            <button onClick={nextMonth} className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+            <button onClick={nextMonth} className="p-2 text-gray-400 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
           </div>
 
           {/* Day headers */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-1.5">
             {DAY_NAMES.map(d => (
-              <div key={d} className="text-center text-[9px] text-gray-500 font-medium py-0.5">{d}</div>
+              <div key={d} className="text-center text-[10px] text-gray-500 font-semibold py-1">{d}</div>
             ))}
           </div>
 
           {/* Calendar rows */}
-          <div className="flex-1 flex flex-col gap-1 min-h-0">
+          <div className="flex-1 flex flex-col gap-1.5 min-h-0">
             {weeks.map((wk, wi) => (
-              <div key={wi} className="grid grid-cols-7 gap-1 flex-1 min-h-0">
+              <div key={wi} className="grid grid-cols-7 gap-1.5 flex-1 min-h-0">
                 {wk.map((cell, ci) => {
                   if (!cell) return <div key={ci} />;
                   const dayScore = getDayScore(cell.data);
@@ -199,17 +160,24 @@ export default function HealthCalendar({ records }) {
                   const isToday = cell.date === today.toISOString().split('T')[0];
                   const hasData = cell.data != null;
                   return (
-                    <button
+                    <motion.button
                       key={ci}
+                      whileHover={hasData ? { scale: 1.08 } : {}}
+                      whileTap={hasData ? { scale: 0.95 } : {}}
                       onClick={() => hasData && setSelectedDay(isSelected ? null : cell.date)}
-                      className={`rounded-md flex flex-col items-center justify-center relative transition-all h-full ${
-                        hasData ? 'cursor-pointer hover:ring-1 hover:ring-white/30' : 'cursor-default opacity-40'
-                      } ${isSelected ? 'ring-2 ring-white' : ''}`}
-                      style={{ backgroundColor: hasData ? color + '35' : '#1a1a2e' }}
+                      className={`rounded-lg flex flex-col items-center justify-center relative transition-all h-full ${
+                        hasData ? 'cursor-pointer' : 'cursor-default opacity-25'
+                      } ${isSelected ? 'ring-2 ring-white/60' : ''}`}
+                      style={{ backgroundColor: hasData ? `${color}25` : 'rgba(255,255,255,0.01)' }}
                     >
-                      <span className={`text-xs font-medium ${isToday ? 'text-[#00E676]' : 'text-gray-300'}`}>{cell.day}</span>
-                      {hasData && <div className="w-1.5 h-1.5 rounded-full mt-0.5" style={{ backgroundColor: color }} />}
-                    </button>
+                      <span className={`text-xs font-semibold ${isToday ? 'text-[#00E676]' : hasData ? 'text-gray-300' : 'text-gray-600'}`}>{cell.day}</span>
+                      {hasData && (
+                        <motion.div 
+                          initial={{ scale: 0 }} animate={{ scale: 1 }}
+                          className="w-2 h-2 rounded-full mt-0.5" style={{ backgroundColor: color }} 
+                        />
+                      )}
+                    </motion.button>
                   );
                 })}
               </div>
@@ -217,61 +185,62 @@ export default function HealthCalendar({ records }) {
           </div>
         </div>
 
-        {/* Stats panel (right side) */}
+        {/* Stats panel */}
         <div className="w-[180px] flex-shrink-0 flex flex-col justify-center">
-          {selectedData ? (
-            <div className="space-y-3">
-              <div className="text-sm text-gray-300 font-semibold border-b border-gray-700/50 pb-1.5">
-                {selectedDay}
-                {selectedScore != null && (
-                  <span className="ml-2 text-xs font-bold" style={{ color: getDayColor(selectedScore) }}>
-                    {selectedScore} — {getDayLabel(selectedScore)}
-                  </span>
-                )}
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 uppercase">Recovery</div>
-                <div className="text-3xl font-bold" style={{ color: getRecoveryColor(selectedData.recovery?.score) }}>
-                  {selectedData.recovery?.score != null ? `${selectedData.recovery.score}%` : '--'}
+          <AnimatePresence mode="wait">
+            {selectedData ? (
+              <motion.div 
+                key={selectedDay}
+                initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
+                className="space-y-3"
+              >
+                <div className="text-sm text-gray-200 font-bold border-b border-white/[0.08] pb-2">
+                  {selectedDay}
+                  {selectedScore != null && (
+                    <span className="ml-2 text-xs font-bold" style={{ color: getDayColor(selectedScore) }}>
+                      {selectedScore} — {getDayLabel(selectedScore)}
+                    </span>
+                  )}
                 </div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 uppercase">Strain</div>
-                <div className="text-3xl font-bold" style={{ color: getStrainColor(selectedData.strain?.strain) }}>
-                  {selectedData.strain?.strain != null ? selectedData.strain.strain.toFixed(1) : '--'}
+                <div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Recovery</div>
+                  <div className="text-3xl font-black font-mono tabular-nums" style={{ color: getRecoveryColor(selectedData.recovery?.score) }}>
+                    {selectedData.recovery?.score != null ? `${selectedData.recovery.score}%` : '--'}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 uppercase">Sleep</div>
-                <div className="text-3xl font-bold" style={{ color: getSleepColor(selectedData.sleep?.total_sleep_hrs) }}>
-                  {selectedData.sleep?.total_sleep_hrs != null ? `${selectedData.sleep.total_sleep_hrs.toFixed(1)}h` : '--'}
+                <div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Strain</div>
+                  <div className="text-3xl font-black font-mono tabular-nums" style={{ color: getStrainColor(selectedData.strain?.strain) }}>
+                    {selectedData.strain?.strain != null ? selectedData.strain.strain.toFixed(1) : '--'}
+                  </div>
                 </div>
-              </div>
-              <div className="border-t border-gray-700/50 pt-3 space-y-2.5">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">HRV</span>
-                  <span className="text-sm font-bold text-[#B388FF]">{selectedData.recovery?.hrv_rmssd_milli != null ? `${Math.round(selectedData.recovery.hrv_rmssd_milli)}ms` : '--'}</span>
+                <div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Sleep</div>
+                  <div className="text-3xl font-black font-mono tabular-nums" style={{ color: getSleepColor(selectedData.sleep?.total_sleep_hrs) }}>
+                    {selectedData.sleep?.total_sleep_hrs != null ? `${selectedData.sleep.total_sleep_hrs.toFixed(1)}h` : '--'}
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">RHR</span>
-                  <span className="text-sm font-bold text-[#FF5252]">{selectedData.recovery?.resting_heart_rate != null ? `${selectedData.recovery.resting_heart_rate}bpm` : '--'}</span>
+                <div className="border-t border-white/[0.08] pt-3 space-y-2.5">
+                  {[
+                    { label: 'HRV', value: selectedData.recovery?.hrv_rmssd_milli != null ? `${Math.round(selectedData.recovery.hrv_rmssd_milli)}ms` : '--', color: '#B388FF' },
+                    { label: 'RHR', value: selectedData.recovery?.resting_heart_rate != null ? `${selectedData.recovery.resting_heart_rate}bpm` : '--', color: '#FF5252' },
+                    { label: 'SpO2', value: selectedData.recovery?.spo2_percentage != null ? `${selectedData.recovery.spo2_percentage.toFixed(1)}%` : '--', color: '#69F0AE' },
+                    { label: 'Workouts', value: selectedData.workouts?.length || 0, color: '#18FFFF' },
+                  ].map(item => (
+                    <div key={item.label} className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500 font-medium">{item.label}</span>
+                      <span className="text-sm font-bold font-mono tabular-nums" style={{ color: item.color }}>{item.value}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">SpO2</span>
-                  <span className="text-sm font-bold text-[#69F0AE]">{selectedData.recovery?.spo2_percentage != null ? `${selectedData.recovery.spo2_percentage.toFixed(1)}%` : '--'}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">Workouts</span>
-                  <span className="text-sm font-bold text-[#18FFFF]">{selectedData.workouts?.length || 0}</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center text-gray-500">
-              <div className="text-sm mb-1 text-gray-400">Select a day</div>
-              <div className="text-xs text-gray-400">Click a date to view stats</div>
-            </div>
-          )}
+              </motion.div>
+            ) : (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+                <div className="text-sm mb-1 text-gray-400 font-medium">Select a day</div>
+                <div className="text-xs text-gray-600">Click a date to view stats</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </WidgetCard>

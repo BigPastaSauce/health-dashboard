@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import WidgetCard from './WidgetCard';
+import { AnimatedNumber } from '../hooks/useCountUp';
 import { MaximizeButton, MaximizedOverlay, useTimeframeFilter, TimeframeSelector } from './ChartControls';
 
 const AGE = 23;
@@ -96,7 +97,7 @@ function calculateTrendBonus(values) {
 
 function getScoreColor(score) {
   if (score >= 80) return '#00E676'; if (score >= 60) return '#69F0AE';
-  if (score >= 40) return '#FFD600'; if (score >= 25) return '#FF9100'; return '#FF1744';
+  if (score >= 40) return '#FFD600'; if (score >= 25) return '#FF9100'; return '#FF5252';
 }
 
 function getScoreLabel(score) {
@@ -136,44 +137,30 @@ function calculateDailyScore(record, records, sleepDebtAlltime) {
 function calculateCumulativeScore(records, sleepDebtAlltime) {
   if (!records || records.length === 0) return { cumulative: 50, trend: 0, streak: 0 };
 
-  const alpha = 0.1; // EMA decay — lower = more smoothing
-  let ema = 50; // start at neutral
+  const alpha = 0.1;
+  let ema = 50;
   let streak = 0;
   const dailyScores = [];
 
   for (let i = 0; i < records.length; i++) {
     const { overall } = calculateDailyScore(records[i], records.slice(0, i + 1), sleepDebtAlltime);
     dailyScores.push(overall);
-
-    // Update EMA
     ema = alpha * overall + (1 - alpha) * ema;
-
-    // Track streak of good days (score >= 60)
-    if (overall >= 60) {
-      streak++;
-    } else {
-      streak = 0;
-    }
+    if (overall >= 60) streak++; else streak = 0;
   }
 
-  // Streak bonus: +1 per 7 consecutive good days, max +8
   const streakBonus = Math.min(Math.floor(streak / 7) * 2, 8);
 
-  // Trend: compare last 7-day EMA vs previous 7-day EMA
   let trend = 0;
   if (dailyScores.length >= 14) {
     const recent7 = dailyScores.slice(-7);
     const prev7 = dailyScores.slice(-14, -7);
-    const recentAvg = recent7.reduce((a, b) => a + b, 0) / recent7.length;
-    const prevAvg = prev7.reduce((a, b) => a + b, 0) / prev7.length;
-    trend = recentAvg - prevAvg;
+    trend = recent7.reduce((a, b) => a + b, 0) / recent7.length - prev7.reduce((a, b) => a + b, 0) / prev7.length;
   } else if (dailyScores.length >= 4) {
     const half = Math.floor(dailyScores.length / 2);
     const recent = dailyScores.slice(-half);
     const prev = dailyScores.slice(0, half);
-    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-    const prevAvg = prev.reduce((a, b) => a + b, 0) / prev.length;
-    trend = recentAvg - prevAvg;
+    trend = recent.reduce((a, b) => a + b, 0) / recent.length - prev.reduce((a, b) => a + b, 0) / prev.length;
   }
 
   const cumulative = clamp(Math.round(ema + streakBonus), 1, 100);
@@ -198,13 +185,11 @@ export default function HealthScore({ records, sleepDebtAlltime }) {
     return { overall: cumulative, dailyScore, components, physAge, ageDiff, trendBonus, trend, streak };
   }, [records, sleepDebtAlltime]);
 
-  // Build chart data for expanded view
   const chartData = useMemo(() => {
     if (!filteredRecords || filteredRecords.length === 0) return [];
     const alpha = 0.1;
     let ema = 50;
     let streakCount = 0;
-
     return filteredRecords.map((r, i) => {
       const { overall: daily } = calculateDailyScore(r, filteredRecords.slice(0, i + 1), sleepDebtAlltime);
       ema = alpha * daily + (1 - alpha) * ema;
@@ -216,13 +201,16 @@ export default function HealthScore({ records, sleepDebtAlltime }) {
   }, [filteredRecords, sleepDebtAlltime]);
 
   if (!computed) return null;
-  const { overall, dailyScore, components, physAge, ageDiff, trendBonus, trend, streak } = computed;
+  const { overall, dailyScore, components, physAge, ageDiff, trend, streak } = computed;
   const scoreColor = getScoreColor(overall);
   const dailyColor = getScoreColor(dailyScore);
-  const ageColor = ageDiff <= 0 ? '#00E676' : ageDiff <= 3 ? '#FFD600' : '#FF1744';
+  const ageColor = ageDiff <= 0 ? '#00E676' : ageDiff <= 3 ? '#FFD600' : '#FF5252';
   const trendArrow = trend > 1 ? '↑' : trend < -1 ? '↓' : '→';
-  const trendColor = trend > 1 ? '#00E676' : trend < -1 ? '#FF1744' : '#9ca3af';
+  const trendColor = trend > 1 ? '#00E676' : trend < -1 ? '#FF5252' : '#9ca3af';
   const sorted = Object.values(components).sort((a, b) => b.weight - a.weight);
+
+  const radius = 68;
+  const circumference = 2 * Math.PI * radius;
 
   const modeButtons = (
     <div className="flex gap-3 mr-2">
@@ -243,27 +231,21 @@ export default function HealthScore({ records, sleepDebtAlltime }) {
     <div className={height}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#3a3a5a" />
-          <XAxis dataKey="date" tick={{ fill: '#8888AA', fontSize: 11 }} />
-          <YAxis tick={{ fill: '#8888AA', fontSize: 11 }} domain={[0, 100]} />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+          <XAxis dataKey="date" tick={{ fill: '#555', fontSize: 11 }} />
+          <YAxis tick={{ fill: '#555', fontSize: 11 }} domain={[0, 100]} />
           <Tooltip isAnimationActive={false}
-            contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8 }}
-            labelStyle={{ color: '#9ca3af' }}
+            contentStyle={{ backgroundColor: '#1a1b25', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12 }}
+            labelStyle={{ color: '#666' }}
             formatter={(value, name) => [
               <span style={{ color: name === 'cumulative' ? '#00E676' : '#448AFF' }}>{Math.round(value)}</span>,
-              <span style={{ color: '#9ca3af' }}>{name === 'cumulative' ? 'Cumulative' : 'Daily'}</span>
+              <span style={{ color: '#666' }}>{name === 'cumulative' ? 'Cumulative' : 'Daily'}</span>
             ]}
           />
-          {showCumulative && (
-            <Line type="monotone" dataKey="cumulative" stroke="#00E676" strokeWidth={2} dot={false} />
-          )}
-          {showDaily && (
-            <Line type="monotone" dataKey="daily" stroke="#448AFF" strokeWidth={1.5} dot={false} />
-          )}
-          <Legend
-            wrapperStyle={{ fontSize: 11, color: '#9ca3af' }}
-            formatter={(value) => value === 'cumulative' ? 'Cumulative' : 'Daily'}
-          />
+          {showCumulative && <Line type="monotone" dataKey="cumulative" stroke="#00E676" strokeWidth={2} dot={false} />}
+          {showDaily && <Line type="monotone" dataKey="daily" stroke="#448AFF" strokeWidth={1.5} dot={false} />}
+          <Legend wrapperStyle={{ fontSize: 11, color: '#666' }}
+            formatter={(value) => value === 'cumulative' ? 'Cumulative' : 'Daily'} />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -271,83 +253,86 @@ export default function HealthScore({ records, sleepDebtAlltime }) {
 
   return (
     <>
-      <WidgetCard title="Health Score" headerRight={<MaximizeButton onClick={() => setMaximized(true)} />}>
-        {/* Top section: ring + physio age side by side */}
-        <div className="flex items-center gap-10 mb-3">
+      <WidgetCard title="Health Score" headerRight={<MaximizeButton onClick={() => setMaximized(true)} />} glowColor={scoreColor}>
+        <div className="flex items-center gap-8 mb-5">
           {/* Score ring */}
-          <div className="relative flex-shrink-0" style={{ width: 170, height: 170 }}>
-            <svg width={170} height={170} className="transform -rotate-90">
-              <circle cx={85} cy={85} r={72} fill="none" stroke="#2a2a4a" strokeWidth="8" />
+          <div className="relative flex-shrink-0" style={{ width: 160, height: 160 }}>
+            <div className="absolute inset-0 rounded-full" style={{
+              background: `radial-gradient(circle, ${scoreColor}15 0%, transparent 70%)`,
+              filter: 'blur(15px)', transform: 'scale(1.3)',
+            }} />
+            <svg width={160} height={160} className="transform -rotate-90 relative z-10">
+              <circle cx={80} cy={80} r={radius} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="7" />
               <motion.circle
-                cx={85} cy={85} r={72} fill="none"
-                stroke={scoreColor} strokeWidth="8" strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 72}
-                initial={{ strokeDashoffset: 2 * Math.PI * 72 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 72 * (1 - overall / 100) }}
+                cx={80} cy={80} r={radius} fill="none"
+                stroke={scoreColor} strokeWidth="7" strokeLinecap="round"
+                strokeDasharray={circumference}
+                initial={{ strokeDashoffset: circumference }}
+                animate={{ strokeDashoffset: circumference * (1 - overall / 100) }}
                 transition={{ duration: 1.5, ease: 'easeOut' }}
+                style={{ filter: `drop-shadow(0 0 10px ${scoreColor}40)` }}
               />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <motion.span className="text-4xl font-black" style={{ color: scoreColor }}
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-                {overall}
-              </motion.span>
-              <span className="text-[9px] text-whoop-textDim uppercase tracking-wider font-semibold">{getScoreLabel(overall)}</span>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="text-[10px] font-bold" style={{ color: trendColor }}>{trendArrow}</span>
-                <span className="text-[9px] text-whoop-textDim">cumulative</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+              <AnimatedNumber value={overall} duration={1500} className="text-5xl font-black font-mono tabular-nums" style={{ color: scoreColor }} />
+              <span className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mt-0.5">{getScoreLabel(overall)}</span>
+              <div className="flex items-center gap-1 mt-1">
+                <motion.span 
+                  animate={{ y: trend > 0 ? [-1, 1, -1] : trend < 0 ? [1, -1, 1] : [0, 0, 0] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="text-xs font-bold" style={{ color: trendColor }}
+                >{trendArrow}</motion.span>
+                <span className="text-[10px] text-gray-500">cumulative</span>
               </div>
             </div>
           </div>
 
           {/* Physio age + trend */}
           <div className="flex-1">
-            <div className="text-[10px] text-whoop-textDim uppercase tracking-wider mb-1">Physiological Age</div>
+            <div className="text-[11px] text-gray-500 uppercase tracking-wider mb-1 font-medium">Physiological Age</div>
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-4xl font-black" style={{ color: ageColor }}>{physAge}</span>
-              <span className="text-sm text-whoop-textDim">yrs</span>
+              <AnimatedNumber value={physAge} duration={1500} className="text-5xl font-black font-mono tabular-nums" style={{ color: ageColor }} />
+              <span className="text-base text-gray-400 font-medium">yrs</span>
             </div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`text-sm font-bold ${ageDiff <= 0 ? 'text-[#00E676]' : 'text-[#FF1744]'}`}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm font-bold" style={{ color: ageDiff <= 0 ? '#00E676' : '#FF5252' }}>
                 {ageDiff <= 0 ? '↓' : '↑'} {Math.abs(ageDiff)} {ageDiff <= 0 ? 'younger' : 'older'}
               </span>
-              <span className="text-[10px] text-whoop-textDim">vs actual {AGE}</span>
+              <span className="text-xs text-gray-500">vs actual {AGE}</span>
             </div>
-            <div className="flex items-center gap-3 mt-2">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-whoop-textDim">Today</span>
-                <span className="text-lg font-bold" style={{ color: dailyColor }}>{dailyScore}</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 font-medium">Today</span>
+                <span className="text-2xl font-black font-mono tabular-nums" style={{ color: dailyColor }}>{dailyScore}</span>
               </div>
               {streak >= 3 && (
-                <div className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#00E676]/15 text-[#00E676]">
-                  🔥 {streak}d streak
-                </div>
-              )}
-              {trend !== 0 && (
-                <div className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${trend > 0 ? 'bg-[#00E676]/15 text-[#00E676]' : 'bg-[#FF1744]/15 text-[#FF1744]'}`}>
-                  {trendArrow} {trend > 0 ? '+' : ''}{trend}
-                </div>
+                <motion.div 
+                  initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.8 }}
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/15"
+                >
+                  🔥 {streak}d
+                </motion.div>
               )}
             </div>
-            <div className="text-[10px] text-whoop-textDim mt-1.5 leading-tight">
+            <div className="text-xs text-gray-500 mt-2 leading-relaxed">
               {ageDiff <= -3 ? 'Aging significantly slower' : ageDiff <= 0 ? 'Aging slower than average' : ageDiff <= 3 ? 'Aging slightly faster' : 'Focus on recovery & sleep'}
             </div>
           </div>
         </div>
 
         {/* Component bars */}
-        <div className="space-y-1.5 mt-6">
-          {sorted.map(c => {
+        <div className="space-y-2 mt-2">
+          {sorted.map((c, i) => {
             const barColor = getScoreColor(c.score);
             return (
-              <div key={c.label} className="flex items-center gap-2">
-                <div className="w-20 text-xs text-whoop-textDim truncate">{c.label}</div>
-                <div className="flex-1 bg-[#1a1a2e] rounded-full h-1.5 overflow-hidden relative">
+              <div key={c.label} className="flex items-center gap-3">
+                <div className="w-[80px] text-xs text-gray-400 truncate font-medium">{c.label}</div>
+                <div className="flex-1 bg-white/[0.04] rounded-full h-2 overflow-hidden">
                   <motion.div className="h-full rounded-full" style={{ backgroundColor: barColor }}
                     initial={{ width: 0 }} animate={{ width: `${c.score}%` }}
-                    transition={{ duration: 1, ease: 'easeOut' }} />
+                    transition={{ duration: 1, delay: 0.3 + i * 0.08, ease: 'easeOut' }} />
                 </div>
-                <div className="w-8 text-sm font-bold text-right" style={{ color: barColor }}>{c.score}</div>
+                <div className="w-8 text-xs font-bold text-right font-mono tabular-nums" style={{ color: barColor }}>{c.score}</div>
               </div>
             );
           })}

@@ -7,7 +7,7 @@ import { execSync } from 'child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = 3002;
+const PORT = process.env.PORT || 3003;
 
 app.use(cors());
 

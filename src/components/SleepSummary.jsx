@@ -1,23 +1,32 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { motion } from 'framer-motion';
 import WidgetCard from './WidgetCard';
+import { AnimatedNumber } from '../hooks/useCountUp';
 
-export default function SleepSummary({ data, records }) {
-  if (!data?.sleep) return null;
+export default function SleepSummary({ data, records, comparison }) {
+  if (!data?.sleep) return (
+    <WidgetCard title="Sleep" className="items-center justify-center">
+      <div className="text-gray-600 text-sm">No sleep data</div>
+    </WidgetCard>
+  );
 
   const s = data.sleep;
   const totalSleep = s.total_sleep_hrs || 0;
+  const totalHrs = Math.floor(totalSleep);
+  const totalMins = Math.round((totalSleep - totalHrs) * 60);
 
-  // Calculate average sleep across all records
   const sleepRecords = (records || []).filter(r => r.sleep?.total_sleep_hrs);
   const avgSleep = sleepRecords.length > 0
     ? sleepRecords.reduce((sum, r) => sum + r.sleep.total_sleep_hrs, 0) / sleepRecords.length
     : 0;
+
   const stages = [
-    { label: 'Deep', hours: s.deep_sleep_hrs || 0, color: '#448AFF' },
-    { label: 'REM', hours: s.rem_sleep_hrs || 0, color: '#B388FF' },
-    { label: 'Light', hours: s.light_sleep_hrs || 0, color: '#18FFFF' },
-    { label: 'Awake', hours: s.total_awake_hrs || 0, color: '#FF1744' },
+    { label: 'Deep', hours: s.deep_sleep_hrs || 0, color: '#448AFF', icon: '💎' },
+    { label: 'REM', hours: s.rem_sleep_hrs || 0, color: '#B388FF', icon: '🧠' },
+    { label: 'Light', hours: s.light_sleep_hrs || 0, color: '#18FFFF', icon: '💤' },
+    { label: 'Awake', hours: s.total_awake_hrs || 0, color: '#FF5252', icon: '👁' },
   ];
+
+  const totalStageHrs = stages.reduce((s, st) => s + st.hours, 0) || 1;
 
   const formatHrs = (h) => {
     if (h == null) return '--';
@@ -43,101 +52,132 @@ export default function SleepSummary({ data, records }) {
   const asleepTime = formatTime(s.start);
   const awokeTime = formatTime(s.end);
 
-  const pieData = stages.filter(st => st.hours > 0);
+  const sleepColor = totalSleep >= 7.5 ? '#00E676' : totalSleep >= 6 ? '#FFD600' : '#FF5252';
+
+  // Efficiency ring
+  const effValue = efficiency || 0;
+  const effRadius = 32;
+  const effCircumference = 2 * Math.PI * effRadius;
+  const effOffset = effCircumference - (effValue / 100) * effCircumference;
+  const effColor = effValue >= 90 ? '#00E676' : effValue >= 75 ? '#FFD600' : '#FF5252';
 
   return (
-    <WidgetCard title="Sleep">
+    <WidgetCard title="Sleep" glowColor="#448AFF">
       <div className="flex flex-col h-full">
-        {/* Top: total sleep */}
-        <div className="mb-3 flex items-baseline">
-          <span className="text-5xl font-black text-whoop-text">{formatHrs(totalSleep)}</span>
-          <span className="text-base text-whoop-textDim ml-3">total sleep</span>
-          {avgSleep > 0 && (
-            <span className="text-sm text-whoop-textDim ml-auto">avg: <span className="font-bold text-whoop-text">{formatHrs(avgSleep)}</span></span>
-          )}
+        {/* Top: total sleep + efficiency ring */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="flex items-baseline gap-1">
+              <AnimatedNumber value={totalHrs} duration={1200} className="text-6xl font-black font-mono tabular-nums" style={{ color: sleepColor }} />
+              <span className="text-3xl font-bold text-gray-500">h</span>
+              <AnimatedNumber value={totalMins} duration={1200} className="text-4xl font-bold font-mono tabular-nums" style={{ color: sleepColor }} />
+              <span className="text-xl font-bold text-gray-500">m</span>
+            </div>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-base font-semibold text-gray-300 font-mono tabular-nums">{asleepTime}</span>
+              <span className="text-sm text-gray-500">→</span>
+              <span className="text-base font-semibold text-gray-300 font-mono tabular-nums">{awokeTime}</span>
+              {comparison && (
+                <motion.span 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+                  className="text-xs font-semibold"
+                  style={{ color: comparison.improved ? '#00E676' : '#FF5252' }}
+                >
+                  {comparison.improved ? '↑' : '↓'} {Math.abs(comparison.diff)}h
+                </motion.span>
+              )}
+            </div>
+            <div className="flex items-center gap-3 mt-1.5">
+              <span className="text-sm text-gray-500">total sleep</span>
+              {avgSleep > 0 && (
+                <span className="text-sm text-gray-500">avg: <span className="font-bold text-gray-300 font-mono tabular-nums">{formatHrs(avgSleep)}</span></span>
+              )}
+            </div>
+          </div>
+
+          {/* Efficiency ring */}
+          <div className="relative flex-shrink-0" style={{ width: 80, height: 80 }}>
+            <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+              <circle cx="40" cy="40" r={effRadius} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="4" />
+              <motion.circle
+                cx="40" cy="40" r={effRadius} fill="none"
+                stroke={effColor} strokeWidth="4" strokeLinecap="round"
+                strokeDasharray={effCircumference}
+                initial={{ strokeDashoffset: effCircumference }}
+                animate={{ strokeDashoffset: effOffset }}
+                transition={{ duration: 1.5, delay: 0.5, ease: 'easeOut' }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-lg font-bold font-mono tabular-nums" style={{ color: effColor }}>{Math.round(effValue)}%</span>
+              <span className="text-[10px] text-gray-400 font-medium">Efficiency</span>
+            </div>
+          </div>
         </div>
 
-        {/* Middle: legend left, pie chart right */}
-        <div className="flex items-center justify-center gap-8 flex-1 min-h-0">
-          <div className="flex flex-col gap-4">
-            {stages.map((stage) => (
-              <div key={stage.label} className="flex items-center gap-3">
-                <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                <span className="text-lg text-whoop-textDim">{stage.label}</span>
-                <span className="text-lg font-bold text-whoop-text">{formatHrs(stage.hours)}</span>
-              </div>
+        {/* Sleep stages bars */}
+        <div className="mb-4">
+          {/* Stacked bar */}
+          <div className="flex h-6 rounded-full overflow-hidden mb-3 bg-white/[0.02]">
+            {stages.map((stage, i) => {
+              const pct = (stage.hours / totalStageHrs) * 100;
+              if (pct <= 0) return null;
+              return (
+                <motion.div
+                  key={stage.label}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 1, delay: 0.3 + i * 0.15, ease: 'easeOut' }}
+                  className="h-full first:rounded-l-full last:rounded-r-full"
+                  style={{ backgroundColor: stage.color }}
+                  title={`${stage.label}: ${formatHrs(stage.hours)}`}
+                />
+              );
+            })}
+          </div>
+          {/* Stage labels — more readable */}
+          <div className="grid grid-cols-4 gap-2">
+            {stages.map((stage, i) => (
+              <motion.div 
+                key={stage.label}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 + i * 0.1 }}
+                className="text-center"
+              >
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: stage.color }} />
+                  <span className="text-sm text-gray-400 font-medium">{stage.label}</span>
+                </div>
+                <span className="text-base font-bold text-gray-200 font-mono tabular-nums">{formatHrs(stage.hours)}</span>
+              </motion.div>
             ))}
           </div>
-          <div className="flex-1 min-w-0 h-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="hours"
-                  nameKey="label"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="30%"
-                  outerRadius="95%"
-                  strokeWidth={2}
-                  stroke="#161b22"
-                >
-                  {pieData.map((entry, idx) => (
-                    <Cell key={idx} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip isAnimationActive={false}
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    const p = payload[0];
-                    const color = p.payload.color;
-                    const pct = Math.round((p.value / (totalSleep || 1)) * 100);
-                    return (
-                      <div style={{ backgroundColor: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 8, padding: '8px 12px' }}>
-                        <div style={{ color, fontSize: 13, fontWeight: 600 }}>{p.name}: {formatHrs(p.value)} ({pct}%)</div>
-                      </div>
-                    );
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
         </div>
 
-        {/* Bottom: metrics grid */}
-        <div className="grid grid-cols-4 gap-x-6 gap-y-4 mt-4 flex-shrink-0">
-          <div>
-            <div className="text-sm text-whoop-textDim">Asleep</div>
-            <div className="text-2xl font-bold text-whoop-text">{asleepTime}</div>
-          </div>
-          <div>
-            <div className="text-sm text-whoop-textDim">Awoke</div>
-            <div className="text-2xl font-bold text-whoop-text">{awokeTime}</div>
-          </div>
-          <div>
-            <div className="text-sm text-whoop-textDim">Performance</div>
-            <div className="text-2xl font-bold text-whoop-text">{performance != null ? `${Math.round(performance)}%` : '--'}</div>
-          </div>
-          <div>
-            <div className="text-sm text-whoop-textDim">Efficiency</div>
-            <div className="text-2xl font-bold text-whoop-text">{efficiency != null ? `${Math.round(efficiency * 10) / 10}%` : '--'}</div>
-          </div>
-          <div>
-            <div className="text-sm text-whoop-textDim">Consistency</div>
-            <div className="text-2xl font-bold text-whoop-text">{consistency != null ? `${Math.round(consistency)}%` : '--'}</div>
-          </div>
-          <div>
-            <div className="text-sm text-whoop-textDim">Resp. Rate</div>
-            <div className="text-2xl font-bold text-whoop-text">{respRate}<span className="text-sm text-whoop-textDim ml-1">br/m</span></div>
-          </div>
-          <div>
-            <div className="text-sm text-whoop-textDim">Cycles</div>
-            <div className="text-2xl font-bold text-whoop-text">{s.sleep_cycles ?? '--'}</div>
-          </div>
-          <div>
-            <div className="text-sm text-whoop-textDim">In Bed</div>
-            <div className="text-2xl font-bold text-whoop-text">{formatHrs(s.total_in_bed_hrs)}</div>
-          </div>
+        {/* Bottom metrics */}
+        <div className="grid grid-cols-4 gap-x-4 gap-y-3 mt-auto flex-shrink-0">
+          {[
+            { label: 'Performance', value: performance != null ? `${Math.round(performance)}%` : '--' },
+            { label: 'Consistency', value: consistency != null ? `${Math.round(consistency)}%` : '--' },
+            { label: 'Resp. Rate', value: `${respRate}`, unit: 'br/m' },
+            { label: 'Cycles', value: s.sleep_cycles ?? '--' },
+            { label: 'In Bed', value: formatHrs(s.total_in_bed_hrs) },
+            { label: 'Deep %', value: totalSleep > 0 ? `${Math.round((s.deep_sleep_hrs / totalSleep) * 100)}%` : '--' },
+          ].map((item, i) => (
+            <motion.div 
+              key={item.label}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 + i * 0.05 }}
+            >
+              <div className="text-sm text-gray-500 tracking-wide font-medium">{item.label}</div>
+              <div className="text-xl font-bold text-gray-200 font-mono tabular-nums">
+                {item.value}
+                {item.unit && <span className="text-xs text-gray-500 ml-1 font-sans">{item.unit}</span>}
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </WidgetCard>

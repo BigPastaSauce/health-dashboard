@@ -17,28 +17,69 @@
 }
 
 body {
-  background-color: #0d0d1a;
+  background-color: #0a0a0f;
   color: #E0E0E0;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Premium scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d0d1a;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a4a;
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a5a;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Recharts overrides for dark theme */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(255, 255, 255, 0.03) !important;
+}
+
+.recharts-tooltip-cursor {
+  fill: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Select dropdown styling */
+select option {
+  background-color: #12131a;
+  color: #999;
+}
+
+/* Pulse glow animation */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Glass card base */
+.glass-card {
+  background: rgba(18, 19, 26, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+}
+
+/* Number tabular alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* react-grid-layout styles */
@@ -69,8 +110,8 @@ body {
 
 .react-grid-placeholder {
   background: #00E676;
-  opacity: 0.15;
-  border-radius: 12px;
+  opacity: 0.1;
+  border-radius: 16px;
   transition-duration: 100ms;
   z-index: 2;
   user-select: none;
@@ -92,11 +133,11 @@ body {
   bottom: 4px;
   width: 8px;
   height: 8px;
-  border-right: 2px solid rgba(255,255,255,0.3);
-  border-bottom: 2px solid rgba(255,255,255,0.3);
+  border-right: 2px solid rgba(255,255,255,0.15);
+  border-bottom: 2px solid rgba(255,255,255,0.15);
 }
 
 .edit-mode .react-grid-item {
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
 }
