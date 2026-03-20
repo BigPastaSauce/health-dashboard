@@ -56,7 +56,7 @@ export default function SleepSummary({ data, records, comparison }) {
 
   // Efficiency ring
   const effValue = efficiency || 0;
-  const effRadius = 32;
+  const effRadius = 85;
   const effCircumference = 2 * Math.PI * effRadius;
   const effOffset = effCircumference - (effValue / 100) * effCircumference;
   const effColor = effValue >= 90 ? '#00E676' : effValue >= 75 ? '#FFD600' : '#FF5252';
@@ -64,9 +64,10 @@ export default function SleepSummary({ data, records, comparison }) {
   return (
     <WidgetCard title="Sleep" glowColor="#448AFF">
       <div className="flex flex-col h-full">
-        {/* Top: total sleep + efficiency ring */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
+        {/* Top: total sleep + efficiency ring side by side */}
+        <div className="flex items-stretch gap-6 mb-4">
+          {/* Left: sleep stats */}
+          <div className="flex-1 flex flex-col justify-center">
             <div className="flex items-baseline gap-1">
               <AnimatedNumber value={totalHrs} duration={1200} className="text-6xl font-black font-mono tabular-nums" style={{ color: sleepColor }} />
               <span className="text-3xl font-bold text-gray-500">h</span>
@@ -95,13 +96,13 @@ export default function SleepSummary({ data, records, comparison }) {
             </div>
           </div>
 
-          {/* Efficiency ring */}
-          <div className="relative flex-shrink-0" style={{ width: 80, height: 80 }}>
-            <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
-              <circle cx="40" cy="40" r={effRadius} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="4" />
+          {/* Efficiency ring — full height of top section */}
+          <div className="relative flex-shrink-0 aspect-square self-stretch" style={{ minWidth: 160, maxWidth: 220, width: '35%', marginTop: -8 }}>
+            <svg viewBox="0 0 220 220" className="w-full h-full -rotate-90">
+              <circle cx="110" cy="110" r={effRadius} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="8" />
               <motion.circle
-                cx="40" cy="40" r={effRadius} fill="none"
-                stroke={effColor} strokeWidth="4" strokeLinecap="round"
+                cx="110" cy="110" r={effRadius} fill="none"
+                stroke={effColor} strokeWidth="8" strokeLinecap="round"
                 strokeDasharray={effCircumference}
                 initial={{ strokeDashoffset: effCircumference }}
                 animate={{ strokeDashoffset: effOffset }}
@@ -109,8 +110,8 @@ export default function SleepSummary({ data, records, comparison }) {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-lg font-bold font-mono tabular-nums" style={{ color: effColor }}>{Math.round(effValue)}%</span>
-              <span className="text-[10px] text-gray-400 font-medium">Efficiency</span>
+              <span className="text-5xl font-black font-mono tabular-nums" style={{ color: effColor }}>{Math.round(effValue)}%</span>
+              <span className="text-base text-gray-400 font-semibold tracking-wide">Efficiency</span>
             </div>
           </div>
         </div>
