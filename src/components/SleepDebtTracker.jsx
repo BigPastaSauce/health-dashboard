@@ -62,8 +62,8 @@ export default function SleepDebtTracker({ sleepDebt, sleepDebtAlltime, records 
     sorted.forEach(r => {
       if (r.sleep && r.sleep.total_sleep_hrs != null) {
         const slept = r.sleep.total_sleep_hrs;
-        const needed = 8;
-        const debt = Math.max(-8, Math.min(slept - needed, 16));
+        const needed = 7; // Mayo Clinic: adults need 7+ hours
+        const debt = Math.max(-7, Math.min(slept - needed, 16)); // Cap deficit at -7h
         byDate[r.date] = { slept, needed, debt: +debt.toFixed(1) };
       }
     });
@@ -75,7 +75,7 @@ export default function SleepDebtTracker({ sleepDebt, sleepDebtAlltime, records 
       if (byDate[dateStr]) {
         data.push({ date: dateStr.slice(5), fullDate: dateStr, debt: byDate[dateStr].debt });
       } else {
-        data.push({ date: dateStr.slice(5), fullDate: dateStr, debt: -8 });
+        data.push({ date: dateStr.slice(5), fullDate: dateStr, debt: -7 });
       }
       d.setDate(d.getDate() + 1);
     }
@@ -120,13 +120,34 @@ export default function SleepDebtTracker({ sleepDebt, sleepDebtAlltime, records 
     return allChartData;
   }, [selectedWeek, allChartData, weeks]);
 
-  const cumulativeDebt = stats.cumulative ?? 0;
-  const severity = stats.severity || 'UNKNOWN';
+  // Calculate stats based on the SELECTED time period, not always all-time
+  const periodStats = useMemo(() => {
+    if (chartData.length === 0) return { cumulative: 0, severity: 'UNKNOWN', bestDay: null, worstDay: null, streak: 0, daysTracked: 0 };
+    let cumulative = 0;
+    let bestDay = null, worstDay = null;
+    let streak = 0;
+    chartData.forEach(d => {
+      cumulative += d.debt;
+      if (!bestDay || d.debt > bestDay.debt) bestDay = d;
+      if (!worstDay || d.debt < worstDay.debt) worstDay = d;
+    });
+    // Cap worst day display at -7
+    if (worstDay && worstDay.debt < -7) worstDay = { ...worstDay, debt: -7 };
+    for (let i = chartData.length - 1; i >= 0; i--) {
+      if (chartData[i].debt < 0) streak++;
+      else break;
+    }
+    const sev = cumulative >= 0 ? 'SURPLUS' : cumulative > -10 ? 'MILD' : cumulative > -20 ? 'MODERATE' : 'SEVERE';
+    return { cumulative: +cumulative.toFixed(1), severity: sev, bestDay, worstDay, streak, daysTracked: chartData.length };
+  }, [chartData]);
+
+  const cumulativeDebt = periodStats.cumulative ?? 0;
+  const severity = periodStats.severity || 'UNKNOWN';
   const alltime = {
-    best_day: stats.bestDay ? { surplus_hrs: stats.bestDay.debt, date: stats.bestDay.fullDate } : null,
-    worst_day: stats.worstDay ? { deficit_hrs: stats.worstDay.debt, date: stats.worstDay.fullDate } : null,
-    streak_deficit: stats.streak,
-    days_tracked: stats.daysTracked,
+    best_day: periodStats.bestDay ? { surplus_hrs: periodStats.bestDay.debt, date: periodStats.bestDay.fullDate } : null,
+    worst_day: periodStats.worstDay ? { deficit_hrs: periodStats.worstDay.debt, date: periodStats.worstDay.fullDate } : null,
+    streak_deficit: periodStats.streak,
+    days_tracked: periodStats.daysTracked,
   };
 
   if (allChartData.length === 0) return null;

@@ -55,7 +55,7 @@ export default function StrainGauge({ data, comparison }) {
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2" style={{
               width: '80%', height: '50%',
               background: `radial-gradient(ellipse at center bottom, ${glow} 0%, transparent 70%)`,
-              filter: 'blur(15px)',
+              filter: 'blur(8px)',
             }} />
             
             <svg viewBox="0 0 200 130" className="w-full h-auto relative z-10">
@@ -78,7 +78,7 @@ export default function StrainGauge({ data, comparison }) {
                 initial={{ strokeDashoffset: Math.PI * 80 }}
                 animate={{ strokeDashoffset: Math.PI * 80 * (1 - percentage / 100) }}
                 transition={{ duration: 1.5, ease: [0.34, 1.56, 0.64, 1], delay: 0.3 }}
-                style={{ filter: `drop-shadow(0 0 10px ${glow})` }}
+                style={{ filter: `drop-shadow(0 0 4px ${glow})` }}
               />
               {/* Tick marks */}
               {[0, 25, 50, 75, 100].map(pct => {

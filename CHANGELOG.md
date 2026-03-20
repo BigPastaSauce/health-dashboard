@@ -5,6 +5,25 @@ All notable changes to the Health Dashboard will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-20 — Sleep Debt Overhaul + Evidence-Based Tracking
+
+### Changed
+- **Sleep debt calculation**: Mayo Clinic evidence-based minimums (adults 7h, teens 8h, children 9h)
+- **Daily deficit capped at -7h** — even 0h sleep nights max out at -7h deficit
+- **Sleep need reduced from 8h → 7h** in widget (was hardcoded, now configurable)
+- **Stats reflect selected time period** — "Latest Week" shows that week's debt, "All Time" shows cumulative
+- **Best/Worst day scoped to period** — changes with dropdown selection
+
+### Added
+- **Age-based sleep thresholds** via `data/user-config.json` (DOB → auto-calculate age group)
+- **Recalculation script** (`recalculate-debt2.py`) — reprocesses all historical data with new rules
+- Support for teen (13-18) and child (6-12) sleep requirements
+
+### Fixed
+- Widget was hardcoding `needed = 8` and `max deficit = -8` — corrected to 7/-7
+- Cumulative debt was always showing all-time regardless of period selector
+- Missing days in chart were penalized at -8h instead of -7h
+
 ## [0.2.0] - 2026-03-19 — Premium Redesign + Gamification
 
 ### Added

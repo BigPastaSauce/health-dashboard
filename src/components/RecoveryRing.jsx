@@ -60,7 +60,7 @@ export default function RecoveryRing({ data, comparison }) {
             {/* Glow */}
             <motion.div 
               className="absolute inset-0 rounded-full" 
-              style={{ background: `radial-gradient(circle, ${glow} 0%, transparent 70%)`, filter: 'blur(20px)', transform: 'scale(1.2)' }}
+              style={{ background: `radial-gradient(circle, ${glow} 0%, transparent 70%)`, filter: 'blur(10px)', transform: 'scale(1.1)' }}
               animate={isGoodRecovery ? { opacity: [0.6, 1, 0.6], scale: [1.2, 1.35, 1.2] } : {}}
               transition={isGoodRecovery ? { repeat: Infinity, duration: 3, ease: 'easeInOut' } : {}}
             />
@@ -73,7 +73,7 @@ export default function RecoveryRing({ data, comparison }) {
                 initial={{ strokeDashoffset: circumference }}
                 animate={{ strokeDashoffset }}
                 transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.3 }}
-                style={{ filter: `drop-shadow(0 0 12px ${glow})` }}
+                style={{ filter: `drop-shadow(0 0 4px ${glow})` }}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
